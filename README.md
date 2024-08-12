@@ -34,7 +34,7 @@ pip install pygame edge-tts
 2. Run the script:
 
 ```bash
-python text_to_speech_script.py
+python edge_tts_async.py
 ```
 
 3. The script will process the text, generate audio files, and play them while displaying synchronized text in the console.
