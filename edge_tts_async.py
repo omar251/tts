@@ -5,13 +5,32 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pygame
 import edge_tts
+from edge_tts import VoicesManager
+import random
+from deep_translator import GoogleTranslator
 
 # Constants
 INPUT_FILE = "input.txt"
+TRANSLATED_FILE = "translated.txt"
 OUTPUT_DIRECTORY = "output_files"
 SPECIAL_CHARACTERS = ".!?;"
-VOICE = "en-GB-SoniaNeural"
 DELIMITER = ":"
+# VOICE = "en-GB-SoniaNeural"
+VOICE = ""
+
+async def translate(input_file):
+    """ Translate input text to english"""
+    translated = GoogleTranslator(source='auto', target='en').translate_file(input_file)
+    with open("translated.txt", "w", encoding='utf-8') as f:
+        f.write(translated)
+
+async def get_voice():
+    global VOICE
+    voices = await VoicesManager.create()
+    # voice = voices.find(Gender="Male", Language="en")
+    voice = voices.find(Language="en")
+    VOICE = random.choice(voice)["Name"]
+    # print(VOICE)
 
 def play_audio(audio_file, text_file):
     """Play audio file and display synchronized text."""
@@ -55,6 +74,7 @@ def display_synchronized_text(word_boundaries, elapsed_time):
 
 async def generate_tts(text, audio_file, text_file):
     """Generate TTS audio and word boundary file."""
+    await get_voice()
     try:
         communicate = edge_tts.Communicate(text, VOICE)
         word_boundaries = []
@@ -123,14 +143,15 @@ def split_text_into_chunks(text):
 async def main():
     """Main function to run the script."""
     os.makedirs(OUTPUT_DIRECTORY, exist_ok=True)
+    await translate(INPUT_FILE)
     try:
-        with open(INPUT_FILE, "r", encoding="utf-8") as file:
+        with open(TRANSLATED_FILE, "r", encoding="utf-8") as file:
             text = file.read().strip()
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
             output_file = os.path.join(OUTPUT_DIRECTORY, f"output_{timestamp}")
             await talk(text, output_file)
     except FileNotFoundError:
-        print(f"Input file '{INPUT_FILE}' not found.")
+        print(f"Input file '{TRANSLATED_FILE}' not found.")
         await talk(f"i have no idea what to say", os.path.join(OUTPUT_DIRECTORY, f"empty"))
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
