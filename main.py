@@ -55,10 +55,15 @@ class TTSApplication:
         except Exception as e:
             logger.error(f"An error occurred during TTS and playback: {e}")
 
-    async def run(self, input_text: str, is_file: bool):
+    async def run(self, input_text: str = None, is_file: bool = False):
         self.file_manager.create_output_directory(config.OUTPUT_DIRECTORY)
 
-        if is_file:
+        if input_text is None:
+            # Default behavior: use INPUT_FILE from config
+            self.translator.translate_file(config.INPUT_FILE, config.TRANSLATED_FILE)
+            with open(config.TRANSLATED_FILE, "r", encoding="utf-8") as file:
+                text = file.read().strip()
+        elif is_file:
             self.translator.translate_file(input_text, config.TRANSLATED_FILE)
             with open(config.TRANSLATED_FILE, "r", encoding="utf-8") as file:
                 text = file.read().strip()
@@ -69,6 +74,9 @@ class TTSApplication:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
             output_file = os.path.join(config.OUTPUT_DIRECTORY, f"output_{timestamp}")
             await self.talk(text, output_file)
+        except FileNotFoundError:
+            logger.error(f"Input file not found.")
+            await self.talk("I have no idea what to say", os.path.join(config.OUTPUT_DIRECTORY, f"empty"))
         except Exception as e:
             logger.error(f"An unexpected error occurred: {e}")
         finally:
@@ -76,7 +84,7 @@ class TTSApplication:
 
 def main():
     parser = argparse.ArgumentParser(description="Text-to-Speech CLI tool")
-    group = parser.add_mutually_exclusive_group(required=True)
+    group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument("-f", "--file", help="Input file path")
     group.add_argument("-t", "--text", help="Input text")
 
@@ -86,8 +94,11 @@ def main():
 
     if args.file:
         asyncio.run(app.run(args.file, is_file=True))
-    else:
+    elif args.text:
         asyncio.run(app.run(args.text, is_file=False))
+    else:
+        # No arguments provided, run with default behavior
+        asyncio.run(app.run())
 
 if __name__ == "__main__":
     main()
