@@ -1,21 +1,25 @@
-# Text-to-Speech Script Documentation
+# Text-to-Speech CLI Tool Documentation
 
 ## Overview
 
-This Python script provides a text-to-speech (TTS) solution that reads text from an input file, converts it to speech using the Microsoft Edge TTS engine, and plays the audio while displaying synchronized text output. The script processes the text in chunks, allowing for smoother playback of long texts.
+This Python CLI tool provides a flexible text-to-speech (TTS) solution that can process input from a file or direct text input. It translates the input to English if necessary, converts it to speech using the Microsoft Edge TTS engine, and plays the audio while displaying synchronized text output. The script processes the text in chunks, allowing for smoother playback of long texts.
 
 ## Features
 
+- Accepts input from a file or direct text input via command-line arguments
+- Translates input text to English (if needed) using Google Translate
 - Converts text to speech using Microsoft Edge TTS
 - Plays audio with synchronized text display
 - Processes text in chunks for better handling of long texts
 - Supports various voices and languages (configurable)
+- Modular design for easy maintenance and extensibility
 
 ## Requirements
 
 - Python 3.7+
 - pygame
 - edge-tts
+- deep-translator
 
 ## Installation
 
@@ -23,70 +27,79 @@ This Python script provides a text-to-speech (TTS) solution that reads text from
 2. Install the required packages:
 
 ```bash
-pip install pygame edge-tts
+pip install pygame edge-tts deep-translator
 ```
 
-3. Clone or download the script to your local machine.
+3. Clone or download the project to your local machine.
 
 ## Usage
 
-1. Prepare an input text file named `input.txt` in the same directory as the script.
-2. Run the script:
+The tool can be used in three ways:
 
+1. Default mode (using `INPUT_FILE` from config):
 ```bash
-python edge_tts_async.py
+python main.py
 ```
 
-3. The script will process the text, generate audio files, and play them while displaying synchronized text in the console.
+2. Process a specific file:
+```bash
+python main.py -f input.txt
+```
+
+3. Process direct text input:
+```bash
+python main.py -t "Hello, how are you?"
+```
 
 ## Configuration
 
-You can modify the following constants in the script to customize its behavior:
+You can modify the following constants in the `config.py` file to customize the tool's behavior:
 
-- `INPUT_FILE`: Name of the input text file (default: "input.txt")
-- `OUTPUT_DIRECTORY`: Directory to store generated audio files (default: "output_files")
-- `SPECIAL_CHARACTERS`: Characters used to split the text into chunks (default: ".!?;")
-- `VOICE`: TTS voice to use (default: "en-GB-SoniaNeural")
+- `INPUT_FILE`: Default input text file path
+- `TRANSLATED_FILE`: Path for the translated text file
+- `OUTPUT_DIRECTORY`: Directory to store generated audio files
+- `SPECIAL_CHARACTERS`: Characters used to split the text into chunks
+- `DELIMITER`: Delimiter used in word boundary files
 
-## Main Functions
+## Main Components
 
-### `main()`
+### `TTSApplication` class
 
-The entry point of the script. It reads the input file, sets up the output directory, and initiates the text-to-speech process.
+The main application class that orchestrates the entire TTS process.
 
-### `talk(text, output_file)`
+### `Translator` class
 
-Orchestrates the entire text-to-speech and playback process. It splits the text into chunks, generates audio for each chunk, and manages the playback queue.
+Handles text translation using Google Translate.
 
-### `generate_tts(text, audio_file, text_file)`
+### `TTSGenerator` class
 
-Generates TTS audio and word boundary files for a given text chunk using the Microsoft Edge TTS engine.
+Generates TTS audio using the Microsoft Edge TTS engine.
 
-### `play_audio(audio_file, text_file)`
+### `AudioPlayer` class
 
-Plays the generated audio file and displays synchronized text in the console.
+Manages audio playback and synchronized text display.
 
-### `process_chunk(chunk, output_file, chunk_text_file, play_queue)`
+### `TextProcessor` class
 
-Processes a single text chunk by generating TTS audio and adding it to the playback queue.
+Processes and splits text into chunks.
 
-### `play_audio_worker(play_queue)`
+### `FileManager` class
 
-A worker function that manages the audio playback queue, ensuring that audio files are played in the correct order.
+Handles file operations and cleanup.
 
 ## Error Handling
 
-The script includes error handling for common issues such as missing input files or TTS generation errors. Error messages will be displayed in the console if any issues occur during execution.
+The tool includes error handling for common issues such as missing input files or TTS generation errors. Error messages will be displayed in the console if any issues occur during execution.
 
 ## Limitations
 
-- The script currently supports only one TTS voice at a time.
 - Audio playback relies on the pygame library, which may have platform-specific limitations.
+- Translation quality depends on the Google Translate service.
 
 ## Contributing
 
-Feel free to fork this project, submit issues, or provide pull requests to improve the script.
+Feel free to fork this project, submit issues, or provide pull requests to improve the tool.
 
 ## License
 
-[Specify the license under which this script is released, e.g., MIT, GPL, etc.]
+[Specify the license under which this tool is released, e.g., MIT, GPL, etc.]
