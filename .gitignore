@@ -1,2 +1,15 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Temp files 
 /output_files
-/__pycache__
+input.txt
+translated.txt
