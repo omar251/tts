@@ -11,5 +11,6 @@ wheels/
 
 # Temp files 
 /output_files
+/output_audio
 input.txt
 translated.txt

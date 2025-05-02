@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream TTS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom styles for better appearance */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7f6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+        }
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        button {
+            transition: background-color 0.2s ease-in-out;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+        }
+        .message.info {
+            background-color: #e0f2f7;
+            color: #026a8a;
+            border: 1px solid #b2ebf2;
+        }
+        .message.success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        .message.error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+        .audio-player {
+            margin-top: 10px;
+            width: 100%;
+        }
+        #current-paragraph {
+            white-space: pre-wrap; /* Preserve line breaks from paragraph text */
+            word-wrap: break-word; /* Break long words */
+            text-align: center; /* Center the text */
+            font-size: 1.1em; /* Slightly larger font */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="container space-y-6">
+        <h1 class="text-2xl font-bold text-center text-gray-800">Text-to-Speech Stream</h1>
+
+        <div id="message-box" class="message info hidden"></div>
+
+        <div>
+            <label for="text" class="block text-sm font-medium text-gray-700 mb-1">Enter Text:</label>
+            <textarea id="text" class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Enter text here..."></textarea>
+        </div>
+
+        <div>
+            <label for="voice-select" class="block text-sm font-medium text-gray-700 mb-1">Select Voice:</label>
+            <select id="voice-select" class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                <option value="">Loading voices...</option>
+            </select>
+        </div>
+
+        <button id="stream-button" class="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 flex items-center justify-center">
+            <i data-lucide="play" class="mr-2 w-5 h-5"></i> Stream Audio
+        </button>
+
+        <div id="audio-container" class="space-y-3">
+            <audio id="single-audio-player" class="audio-player" controls></audio>
+            <div id="current-paragraph" class="mt-4 p-3 bg-gray-200 rounded-md text-gray-800 italic hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        const textInput = document.getElementById('text');
+        const voiceSelect = document.getElementById('voice-select');
+        const streamButton = document.getElementById('stream-button');
+        const audioContainer = document.getElementById('audio-container');
+        const messageBox = document.getElementById('message-box');
+        const singleAudioPlayer = document.getElementById('single-audio-player'); // Get the single audio player
+        const currentParagraphDiv = document.getElementById('current-paragraph'); // Get the paragraph display div
+
+        // Generate a simple client ID (for demonstration purposes)
+        const clientId = Math.floor(Math.random() * 1000000);
+        let ws;
+        let audioQueue = []; // Stores objects like { url: '...', text: '...' }
+        let isPlaying = false;
+        let isProcessingComplete = false; // Flag to track if server finished processing
+
+        function showMessage(type, message) {
+            messageBox.className = `message ${type}`;
+            messageBox.textContent = message;
+            messageBox.classList.remove('hidden');
+        }
+
+        function hideMessage() {
+            messageBox.classList.add('hidden');
+        }
+
+        function displayParagraph(text) {
+            console.log("displayParagraph called with text:", text);
+            currentParagraphDiv.textContent = text;
+            currentParagraphDiv.classList.remove('hidden');
+            currentParagraphDiv.style.display = 'block'; // Explicitly set display to block
+        }
+
+        function hideParagraph() {
+             console.log("hideParagraph called");
+            currentParagraphDiv.textContent = '';
+            currentParagraphDiv.classList.add('hidden');
+             currentParagraphDiv.style.display = 'none'; // Explicitly set display to none
+        }
+
+
+        async function fetchVoices() {
+            try {
+                const response = await fetch('/api/voices');
+                const voices = await response.json();
+                voiceSelect.innerHTML = '<option value="">-- Select a Voice --</option>'; // Reset options
+                if (voices && voices.length > 0) {
+                    voices.forEach(voice => {
+                        const option = document.createElement('option');
+                        option.value = voice.Name;
+                        option.textContent = `${voice.ShortName} (${voice.Gender}, ${voice.Locale})`;
+                        voiceSelect.appendChild(option);
+                    });
+                } else {
+                     voiceSelect.innerHTML = '<option value="">No voices found</option>';
+                     showMessage('warning', 'Could not fetch voices. Using default server voice.');
+                }
+            } catch (error) {
+                console.error("Error fetching voices:", error);
+                voiceSelect.innerHTML = '<option value="">Error loading voices</option>';
+                showMessage('error', 'Failed to load voices. Using default server voice.');
+            }
+        }
+
+        function connectWebSocket() {
+            // Determine WebSocket URL based on current location
+            const wsUrl = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + `/ws/${clientId}`;
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                console.log(`WebSocket connected for client ${clientId}`);
+                showMessage('info', 'Connected to server.');
+                streamButton.disabled = false; // Enable button once connected
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                console.log("Received message:", data);
+
+                if (data.type === 'audio_url' && data.url && data.text !== undefined) {
+                    console.log("Received audio_url:", data.url, "Text:", data.text);
+                    // Store both URL and text
+                    audioQueue.push({ url: data.url, text: data.text });
+                    console.log("audioQueue length:", audioQueue.length);
+                    if (!isPlaying) {
+                        console.log("Not currently playing, calling playNextAudio");
+                        playNextAudio();
+                    } else {
+                         console.log("Currently playing, chunk added to queue.");
+                    }
+                } else if (data.type === 'complete') {
+                    console.log("Streaming complete message received.");
+                    isProcessingComplete = true; // Set the flag
+                     if (data.warning) {
+                         showMessage('warning', data.warning);
+                     } else if (audioQueue.length === 0 && !isPlaying) {
+                         showMessage('success', 'Processing complete. No audio generated.');
+                         hideParagraph(); // Hide paragraph if no audio
+                     } else if (audioQueue.length === 0 && isPlaying) {
+                         // Wait for the last audio to finish playing (onended will handle message)
+                         showMessage('success', 'Processing complete. Waiting for last audio chunk to finish.');
+                     } else {
+                          showMessage('success', 'Processing complete. All audio chunks received.');
+                     }
+                    streamButton.disabled = false; // Re-enable button
+                    // No need to close WS here, keep it open for future requests
+                } else if (data.type === 'error') {
+                    console.error("Server error message received:", data.message);
+                    showMessage('error', `Server error: ${data.message}`);
+                    streamButton.disabled = false; // Re-enable button
+                    isProcessingComplete = true; // Set the flag even on error
+                    hideParagraph(); // Hide paragraph on error
+                    // No need to close WS here
+                } else if (data.message) {
+                     // Handle other potential messages from the server's WS echo endpoint
+                     console.log("Server message:", data.message);
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error("WebSocket error:", error);
+                showMessage('error', 'WebSocket error. Please check server connection.');
+                streamButton.disabled = true; // Disable button on error
+                isProcessingComplete = true; // Set the flag on error
+                hideParagraph(); // Hide paragraph on error
+            };
+
+            ws.onclose = (event) => {
+                console.log(`WebSocket closed for client ${clientId}:`, event.code, event.reason);
+                showMessage('info', 'Disconnected from server. Attempting to reconnect...');
+                streamButton.disabled = true; // Disable button
+                isProcessingComplete = true; // Set the flag on close
+                hideParagraph(); // Hide paragraph on close
+                // Attempt to reconnect after a delay
+                setTimeout(connectWebSocket, 5000);
+            };
+        }
+
+        function playNextAudio() {
+            console.log("playNextAudio called. audioQueue length:", audioQueue.length, "isPlaying:", isPlaying);
+            if (audioQueue.length > 0 && !isPlaying) {
+                isPlaying = true;
+                const audioChunk = audioQueue.shift(); // Get the object { url, text }
+                console.log("Attempting to play:", audioChunk.url, "with text:", audioChunk.text);
+
+                singleAudioPlayer.src = audioChunk.url;
+                singleAudioPlayer.load(); // Load the new source
+
+                displayParagraph(audioChunk.text); // Display the current paragraph
+
+                singleAudioPlayer.onended = () => {
+                    console.log("Audio chunk finished:", audioChunk.url);
+                    isPlaying = false;
+                    // Check if there are more chunks or if processing is complete
+                    if (audioQueue.length > 0 || !isProcessingComplete) {
+                         console.log("More audio in queue or processing not complete, playing next.");
+                         playNextAudio(); // Play the next audio in the queue
+                    } else {
+                         console.log("All audio chunks played and processing complete.");
+                         // Update message box if needed, but success message is likely already there
+                         if (messageBox.classList.contains('message-success')) {
+                             // Keep the success message
+                         } else {
+                              showMessage('success', 'All audio played.');
+                         }
+                         hideParagraph(); // Hide paragraph when playback finishes
+                    }
+                };
+
+                singleAudioPlayer.onerror = (e) => {
+                    console.error("Error playing audio:", audioChunk.url, e);
+                    showMessage('error', `Error playing audio chunk: ${audioChunk.url}`);
+                    isPlaying = false;
+                    hideParagraph(); // Hide paragraph on error
+                    // Try to play the next one despite the error
+                    if (audioQueue.length > 0 || !isProcessingComplete) {
+                        console.log("Error playing chunk, but more audio in queue or processing not complete, playing next.");
+                        playNextAudio();
+                    } else {
+                         console.log("Error playing last chunk, processing complete.");
+                         if (!messageBox.classList.contains('message-error')) {
+                             showMessage('warning', 'Finished with errors playing some chunks.');
+                         }
+                    }
+                };
+
+                singleAudioPlayer.play().catch(e => {
+                     console.error("Play prevented:", e);
+                     showMessage('warning', 'Audio playback prevented by browser. Please click play manually.');
+                     isPlaying = false; // Reset isPlaying if play fails
+                     hideParagraph(); // Hide paragraph if play was prevented
+                     // Do not call playNextAudio automatically if play was prevented
+                });
+
+                // Show the audio player if it was hidden
+                singleAudioPlayer.style.display = 'block';
+
+            } else if (audioQueue.length === 0 && isProcessingComplete && !isPlaying) {
+                 console.log("Queue empty, processing complete, and not playing. Final state.");
+                 // All audio chunks have been received and played.
+                 if (messageBox.classList.contains('message-success')) {
+                     // Keep the success message
+                 } else {
+                      showMessage('success', 'All audio played.');
+                 }
+                 hideParagraph(); // Ensure paragraph is hidden when everything is done
+            } else {
+                 console.log("playNextAudio called, but no audio to play or already playing. Skipping.");
+            }
+        }
+
+        streamButton.addEventListener('click', async () => {
+            const text = textInput.value.trim();
+            if (!text) {
+                showMessage('warning', 'Please enter text to stream.');
+                return;
+            }
+
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                 showMessage('warning', 'WebSocket connection not open. Please wait or refresh.');
+                 return;
+            }
+
+            // Clear previous audio and queue
+            audioQueue = [];
+            isPlaying = false;
+            isProcessingComplete = false; // Reset processing flag
+            singleAudioPlayer.removeAttribute('src'); // Clear current audio source
+            singleAudioPlayer.load(); // Load the empty source to stop current playback
+            singleAudioPlayer.style.display = 'none'; // Hide player until first chunk arrives
+            hideMessage(); // Hide previous messages
+            hideParagraph(); // Hide previous paragraph
+
+            streamButton.disabled = true; // Disable button while processing
+            showMessage('info', 'Processing text...');
+
+            const selectedVoice = voiceSelect.value || null; // Use null if no voice is selected
+
+            try {
+                const response = await fetch('/api/tts/stream', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        voice: selectedVoice,
+                        client_id: clientId
+                    })
+                });
+
+                const result = await response.json();
+                console.log("POST response:", result);
+
+                if (!response.ok) {
+                    showMessage('error', `Error initiating stream: ${result.detail || result.error || response.statusText}`);
+                    streamButton.disabled = false; // Re-enable button on error
+                    isProcessingComplete = true; // Set flag on error
+                    hideParagraph(); // Hide paragraph on error
+                } else {
+                    // Server will stream URLs via WebSocket
+                    showMessage('info', 'Stream initiated. Waiting for audio chunks...');
+                }
+
+            } catch (error) {
+                console.error("Error initiating stream:", error);
+                showMessage('error', `Failed to initiate stream: ${error.message}`);
+                streamButton.disabled = false; // Re-enable button on error
+                isProcessingComplete = true; // Set flag on error
+                hideParagraph(); // Hide paragraph on error
+            }
+        });
+
+        // Initialize
+        fetchVoices();
+        connectWebSocket();
+        lucide.createIcons(); // Initialize Lucide icons
+
+        // Hide the audio player and paragraph initially
+        singleAudioPlayer.style.display = 'none';
+        currentParagraphDiv.style.display = 'none';
+
+    </script>
+</body>
+</html>
