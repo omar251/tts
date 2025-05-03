@@ -10,4 +10,5 @@ dependencies = [
     "websockets>=15.0.1",
     "fastapi>=0.111.0", # Added FastAPI
     "uvicorn[standard]>=0.29.0", # Added Uvicorn ASGI server
+    "pygame>=2.6.1",
 ]
