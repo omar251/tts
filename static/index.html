@@ -209,7 +209,8 @@
         </div>
 
         <button id="stream-button" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 action-button disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-            <i data-lucide="play-circle" class="w-5 h-5"></i> Stream Audio
+            <span id="stream-button-icon"><i data-lucide="play-circle" class="w-5 h-5"></i></span>
+            <span id="stream-button-text">Stream Audio</span>
         </button>
 
         <div id="audio-container" class="hidden">
@@ -363,11 +364,12 @@
             ws.onopen = () => {
                 console.log(`WebSocket connected for client ${clientId}`);
                 showMessage('success', 'Connected to server.');
-                streamButton.disabled = false;
-                hideMessage();
-            };
+            streamButton.disabled = false;
+            setStreamButtonLoading(false); // Ensure button is reset on connect
+            hideMessage();
+        };
 
-            ws.onmessage = (event) => {
+        ws.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
                     console.log("Received WS message:", data);
@@ -384,22 +386,22 @@
                     } else if (data.type === 'complete') {
                         console.log("Server processing complete message received.");
                         isStreamProcessing = false;
-                        if (data.warning) showMessage('warning', data.warning);
-                        if (!isPlaying && audioQueue.length === 0) {
+                         if (data.warning) showMessage('warning', data.warning);
+                         if (!isPlaying && audioQueue.length === 0) {
                              showMessage('success', 'Processing complete. Playback finished or no audio generated.');
                              resetAudioPlayerUI();
-                        } else if (isPlaying || audioQueue.length > 0) {
+                         } else if (isPlaying || audioQueue.length > 0) {
                              showMessage('info', 'All audio chunks received. Playback in progress...');
-                        }
-                        streamButton.disabled = false;
-                    } else if (data.type === 'error') {
-                        console.error("Server error message received:", data.message);
-                        showMessage('error', `Server error: ${data.message}`);
-                        isStreamProcessing = false;
-                        streamButton.disabled = false;
-                        resetAudioPlayerUI();
-                    } else if (data.message) {
-                        console.log("Server message:", data.message);
+                         }
+                         setStreamButtonLoading(false); // Re-enable button on completion
+                     } else if (data.type === 'error') {
+                         console.error("Server error message received:", data.message);
+                         showMessage('error', `Server error: ${data.message}`);
+                         isStreamProcessing = false;
+                         setStreamButtonLoading(false); // Re-enable button on error
+                         resetAudioPlayerUI();
+                     } else if (data.message) {
+                         console.log("Server message:", data.message);
                     }
                 } catch (e) {
                     console.error("Error parsing WebSocket message:", e, "Data:", event.data);
@@ -410,18 +412,20 @@
             ws.onerror = (error) => {
                 console.error("WebSocket error:", error);
                 showMessage('error', 'WebSocket connection error. Check server and network.');
-                streamButton.disabled = true;
-                isStreamProcessing = false;
-                resetAudioPlayerUI();
-                setTimeout(connectWebSocket, WS_RECONNECT_DELAY);
-            };
+                 streamButton.disabled = true; // Keep disabled during error
+                 setStreamButtonLoading(false); // Reset icon on error
+                 isStreamProcessing = false;
+                 resetAudioPlayerUI();
+                 setTimeout(connectWebSocket, WS_RECONNECT_DELAY);
+             };
 
-            ws.onclose = (event) => {
-                console.log(`WebSocket closed for client ${clientId}:`, event.code, event.reason);
-                streamButton.disabled = true;
-                isStreamProcessing = false;
-                resetAudioPlayerUI();
-                if (!event.wasClean) {
+             ws.onclose = (event) => {
+                 console.log(`WebSocket closed for client ${clientId}:`, event.code, event.reason);
+                 streamButton.disabled = true; // Disable on close
+                 setStreamButtonLoading(false); // Reset icon on close
+                 isStreamProcessing = false;
+                 resetAudioPlayerUI();
+                 if (!event.wasClean) {
                      showMessage('warning', 'Disconnected from server. Attempting to reconnect...');
                      setTimeout(connectWebSocket, WS_RECONNECT_DELAY);
                 } else {
@@ -530,12 +534,12 @@
             console.log("--- Initiating new stream ---");
             audioQueue = [];
             isStreamProcessing = true;
-            resetAudioPlayerUI();
-            hideMessage();
-            streamButton.disabled = true;
-            showMessage('info', 'Initiating stream request...');
+             resetAudioPlayerUI();
+             hideMessage();
+             setStreamButtonLoading(true); // Set loading state
+             showMessage('info', 'Initiating stream request...');
 
-            const selectedVoice = voiceSelect.value || null;
+             const selectedVoice = voiceSelect.value || null;
 
             try {
                 const response = await fetch('/api/tts/stream', {
@@ -546,15 +550,16 @@
                 const result = await response.json();
                 console.log("POST /api/tts/stream response:", result);
                 if (!response.ok) throw new Error(result.detail || result.error || `HTTP error ${response.status}`);
-                showMessage('info', 'Stream initiated. Waiting for audio data...');
-            } catch (error) {
-                console.error("Error initiating stream POST request:", error);
-                showMessage('error', `Failed to start stream: ${error.message}`);
-                isStreamProcessing = false;
-                streamButton.disabled = false;
-                resetAudioPlayerUI();
-            }
-        });
+                 showMessage('info', 'Stream initiated. Waiting for audio data...');
+                 // Button remains loading until WS message indicates completion/error
+             } catch (error) {
+                 console.error("Error initiating stream POST request:", error);
+                 showMessage('error', `Failed to start stream: ${error.message}`);
+                 isStreamProcessing = false;
+                 setStreamButtonLoading(false); // Reset button on fetch error
+                 resetAudioPlayerUI();
+             }
+         });
 
         singleAudioPlayer.onended = () => {
             console.log("Audio chunk ended.");
@@ -629,14 +634,34 @@
              }
          });
 
-        // --- Initialization ---
-        function initializeApp() {
-            console.log("Initializing App...");
-            fetchVoices();
-            connectWebSocket();
-            lucide.createIcons();
-            resetAudioPlayerUI();
-        }
+         // --- Helper for Button Loading State ---
+         const streamButtonIcon = document.getElementById('stream-button-icon');
+         const streamButtonText = document.getElementById('stream-button-text');
+
+         function setStreamButtonLoading(isLoading) {
+             streamButton.disabled = isLoading;
+             if (isLoading) {
+                 streamButtonIcon.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                 </svg>`;
+                 streamButtonText.textContent = 'Processing...';
+             } else {
+                 streamButtonIcon.innerHTML = `<i data-lucide="play-circle" class="w-5 h-5"></i>`;
+                 lucide.createIcons({ nodes: [streamButtonIcon.querySelector('i')] });
+                 streamButtonText.textContent = 'Stream Audio';
+             }
+         }
+
+
+         // --- Initialization ---
+         function initializeApp() {
+             console.log("Initializing App...");
+             fetchVoices();
+             connectWebSocket();
+             lucide.createIcons(); // Initial icon creation
+             resetAudioPlayerUI();
+         }
 
         document.addEventListener('DOMContentLoaded', initializeApp);
 
