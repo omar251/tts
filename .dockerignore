@@ -1,0 +1,75 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Development and IDE files
+.git
+.github
+.gitignore
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Docker files (no need to copy these into the image)
+Dockerfile
+docker-compose*.yml
+
+# Documentation and non-essential files
+README.md
+LICENSE
+docs/
+*.md
+!requirements.txt
+
+# Local development files
+.editorconfig
+.flake8
+.pylintrc
+mypy.ini
+pytest.ini
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+
+# Audio files that might be generated during development
+*.mp3
+*.wav
+*.ogg
+
+# Any potential large data files
+data/
+output_audio/
+test.py
+
+# uv files
+pyproject.toml 
+uv.lock

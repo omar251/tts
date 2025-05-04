@@ -1,92 +1,114 @@
-# Text-to-Speech Script Documentation
+# Text-to-Speech Streaming Service with Real-time Audio Generation
 
-## Overview
+A modern web application that converts text into natural-sounding speech using Microsoft's Edge TTS engine. The service streams audio in real-time, supports multiple voices, and provides an intuitive web interface with advanced audio playback controls.
 
-This Python script provides a text-to-speech (TTS) solution that reads text from an input file, converts it to speech using the Microsoft Edge TTS engine, and plays the audio while displaying synchronized text output. The script processes the text in chunks, allowing for smoother playback of long texts.
+This project combines FastAPI's high-performance backend with WebSocket communication to deliver a responsive text-to-speech experience. It features paragraph-by-paragraph processing, concurrent audio generation, and a custom audio player with controls for volume, playback speed, and track navigation. The service is containerized for easy deployment and scalability.
 
 ## Features
 
-- Converts text to speech using Microsoft Edge TTS
-- Plays audio with synchronized text display
-- Processes text in chunks for better handling of long texts
-- Supports various voices and languages (configurable)
+- **Real-time Audio Streaming**: Converts text to speech and streams audio as it's generated
+- **Paragraph Processing**: Intelligently splits text into paragraphs for natural-sounding speech
+- **Concurrent Generation**: Processes multiple audio segments simultaneously for faster delivery
+- **Multiple Voice Support**: Access to Microsoft's extensive neural voice library
+- **WebSocket Communication**: Maintains persistent connections for real-time updates
+- **Custom Audio Player**: Web interface with playback controls and voice selection
+- **Containerized Deployment**: Docker support for easy deployment and scaling
 
-## Requirements
-
-- Python 3.7+
-- pygame
-- edge-tts
-
-## Installation
-
-1. Ensure you have Python 3.7 or later installed on your system.
-2. Install the required packages:
-
-```bash
-pip install pygame edge-tts
+## Repository Structure
+```
+.
+├── Dockerfile              # Container configuration for building and running the application
+├── pyproject.toml          # Python project metadata and dependencies
+├── requirements.txt        # Generated dependency list for reproducible builds
+├── static/
+│   └── index.html          # Web interface with custom audio player and controls
+├── tts_endpoint.py         # FastAPI application with WebSocket and TTS processing logic
+└── uv.lock                 # Dependency lock file for reproducible builds
 ```
 
-3. Clone or download the script to your local machine.
+## Usage Instructions
+### Prerequisites
+- Python 3.12 or higher
+- Docker (optional, for containerized deployment)
 
-## Usage
+Required Python packages:
+- deep-translator >= 1.11.4
+- edge-tts >= 7.0.1
+- websockets >= 15.0.1
+- fastapi >= 0.111.0
+- uvicorn[standard] >= 0.29.0
 
-1. Prepare an input text file named `input.txt` in the same directory as the script.
-2. Run the script:
+### Installation
 
+#### Local Installation
 ```bash
-python edge_tts_async.py
+# Create and activate virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
 ```
 
-3. The script will process the text, generate audio files, and play them while displaying synchronized text in the console.
+#### Docker Installation
+```bash
+# Build the Docker image
+docker build -t tts-service .
 
-## Configuration
+# Run the container
+docker run -p 8000:8000 tts-service
+```
 
-You can modify the following constants in the script to customize its behavior:
+### Quick Start
+1. Start the server:
+```bash
+# Local development
+uvicorn tts_endpoint:app --reload --host 127.0.0.1 --port 8000
 
-- `INPUT_FILE`: Name of the input text file (default: "input.txt")
-- `OUTPUT_DIRECTORY`: Directory to store generated audio files (default: "output_files")
-- `SPECIAL_CHARACTERS`: Characters used to split the text into chunks (default: ".!?;")
-- `VOICE`: TTS voice to use (default: "en-GB-SoniaNeural")
+# Production
+uvicorn tts_endpoint:app --host 0.0.0.0 --port 8000
+```
 
-## Main Functions
+2. Open `http://localhost:8000` in your web browser
+3. Enter text in the textarea
+4. Select a voice from the dropdown menu
+5. Click "Stream Audio" to begin TTS conversion
 
-### `main()`
+### API Endpoints
 
-The entry point of the script. It reads the input file, sets up the output directory, and initiates the text-to-speech process.
+- `GET /`: Main web interface
+- `GET /api/voices`: Returns list of available TTS voices
+- `POST /api/tts/stream`: Processes text and streams audio URLs via WebSocket
+- `WebSocket /ws/{client_id}`: WebSocket endpoint for real-time communication
 
-### `talk(text, output_file)`
+#### Debug Mode
+Enable debug logging:
+```bash
+uvicorn tts_endpoint:app --log-level debug
+```
 
-Orchestrates the entire text-to-speech and playback process. It splits the text into chunks, generates audio for each chunk, and manages the playback queue.
+## Data Flow
+The service processes text-to-speech requests by splitting text into paragraphs and generating audio files concurrently while maintaining order.
 
-### `generate_tts(text, audio_file, text_file)`
+```ascii
+[Client] -> [WebSocket] -> [TTS Engine]
+    |           |              |
+    |           |        [Audio Generation]
+    |           |              |
+    |      [Audio URLs]    [Storage]
+    |           |              |
+[Audio Player]<-[Stream]<-[Audio Files]
+```
 
-Generates TTS audio and word boundary files for a given text chunk using the Microsoft Edge TTS engine.
-
-### `play_audio(audio_file, text_file)`
-
-Plays the generated audio file and displays synchronized text in the console.
-
-### `process_chunk(chunk, output_file, chunk_text_file, play_queue)`
-
-Processes a single text chunk by generating TTS audio and adding it to the playback queue.
-
-### `play_audio_worker(play_queue)`
-
-A worker function that manages the audio playback queue, ensuring that audio files are played in the correct order.
-
-## Error Handling
-
-The script includes error handling for common issues such as missing input files or TTS generation errors. Error messages will be displayed in the console if any issues occur during execution.
-
-## Limitations
-
-- The script currently supports only one TTS voice at a time.
-- Audio playback relies on the pygame library, which may have platform-specific limitations.
-
-## Contributing
-
-Feel free to fork this project, submit issues, or provide pull requests to improve the script.
+Component Interactions:
+1. Client establishes WebSocket connection with unique client_id
+2. Text is split into paragraphs for processing
+3. TTS engine generates audio files concurrently (max 2 simultaneous)
+4. Audio files are stored in output_audio directory
+5. Audio URLs are streamed to client in order
+6. Client audio player loads and plays audio sequentially
+7. WebSocket maintains real-time communication for status updates
 
 ## License
 
-[Specify the license under which this script is released, e.g., MIT, GPL, etc.]
+This project is open source and available under the MIT License.

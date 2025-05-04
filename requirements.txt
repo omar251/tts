@@ -20,13 +20,17 @@ certifi==2025.4.26
     # via
     #   edge-tts
     #   requests
-charset-normalizer==3.4.1
+charset-normalizer==3.4.2
     # via requests
 click==8.1.8
     # via uvicorn
+colorama==0.4.6
+    # via
+    #   click
+    #   uvicorn
 deep-translator==1.11.4
     # via tts (pyproject.toml)
-edge-tts==7.0.1
+edge-tts==7.0.2
     # via tts (pyproject.toml)
 fastapi==0.115.12
     # via tts (pyproject.toml)
@@ -86,8 +90,6 @@ urllib3==2.4.0
     # via requests
 uvicorn==0.34.2
     # via tts (pyproject.toml)
-uvloop==0.21.0
-    # via uvicorn
 watchfiles==1.0.5
     # via uvicorn
 websockets==15.0.1
