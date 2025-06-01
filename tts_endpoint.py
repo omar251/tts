@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 from datetime import datetime
 import random
@@ -49,18 +50,36 @@ manager = ConnectionManager()
 
 # --- Core Functions ---
 async def get_voice(voice_name: str = None) -> str:
-    """Select a specific voice or a random English voice."""
-    if voice_name:
-        return voice_name
+    """Select a specific voice or a random voice, using cached voices if available."""
+    cache_file = "voices.json"
+
+    # Check for cached voices
+    if os.path.exists(cache_file):
+        with open(cache_file, 'r') as f:
+            cached_voices = json.load(f)
+        if cached_voices:
+            if voice_name:
+                return voice_name
+            # Select a random voice from the cached voices
+            return random.choice(cached_voices)["Name"]
+
+    # If no cache or cache is empty, fetch voices
     try:
-        voices = await VoicesManager.create()
-        voice_options = voices.find(Language="en")
+        voices_manager = await VoicesManager.create()
+        voice_options = voices_manager.voices
+
+        # Cache the voices
+        with open(cache_file, 'w') as f:
+            json.dump(voice_options, f)
+
         if voice_options:
-            return random.choice(voice_options)["Name"]
-        return "en-US-JennyNeural"
+            # Select a random voice from the fetched voices
+            return random.choice(voice_options)["Name"] if not voice_name else voice_name
     except Exception as e:
         print(f"Error getting voices: {e}")
-        return "en-US-JennyNeural"
+
+    # Fallback voice
+    return "en-US-JennyNeural"
 
 async def generate_tts_chunk(text: str, base_filename: str, voice: str) -> str | None:
     """Generate TTS audio for a single text chunk and return the file path."""
@@ -100,10 +119,10 @@ async def get_root():
 
 @app.get("/api/voices")
 async def get_available_voices():
-    """Get list of available English TTS voices."""
+    """Get list of available TTS voices."""
     try:
-        voices = await VoicesManager.create()
-        return voices.find(Language="en")
+        voices_manager = await VoicesManager.create()
+        return voices_manager.voices
     except Exception as e:
         return {"error": f"Failed to get voices: {str(e)}"}
 
