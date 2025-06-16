@@ -17,12 +17,16 @@ class TTSGenerator:
 
             with open(audio_file, "wb") as audio_f, open(text_file, "w") as text_f:
                 async for chunk in communicate.stream():
-                    if chunk["type"] == "audio":
-                        audio_f.write(chunk["data"])
-                    elif chunk["type"] == "WordBoundary":
-                        word_boundary = f"{chunk['text']}:{chunk['offset']/10000000}:{chunk['duration']/10000000}\n"
-                        text_f.write(word_boundary)
-                        word_boundaries.append(word_boundary)
+                    if chunk.get("type") == "audio" and "data" in chunk:
+                        audio_f.write(chunk.get("data", b""))
+                    elif chunk.get("type") == "WordBoundary":
+                        text_val = chunk.get("text")
+                        offset_val = chunk.get("offset")
+                        duration_val = chunk.get("duration")
+                        if text_val is not None and offset_val is not None and duration_val is not None:
+                            word_boundary = f"{text_val}:{offset_val/10000000}:{duration_val/10000000}\n"
+                            text_f.write(word_boundary)
+                            word_boundaries.append(word_boundary)
 
             return audio_file, text_file
         except Exception as e:

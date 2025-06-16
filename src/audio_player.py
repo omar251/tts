@@ -4,7 +4,7 @@ environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame
 from typing import List
 import logging
-import time
+
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,12 @@ class AudioPlayer:
 
     def display_synchronized_text(self, word_boundaries: List[List[str]], elapsed_time: float) -> None:
         for word, start, duration in word_boundaries:
-            if start <= elapsed_time < (start + duration) and word:
+            try:
+                start_f = float(start)
+                duration_f = float(duration)
+            except (ValueError, TypeError):
+                continue
+            if start_f <= elapsed_time < (start_f + duration_f) and word:
                 print(word, end=" ", flush=True)
                 word_boundaries[word_boundaries.index([word, start, duration])][0] = ""
 

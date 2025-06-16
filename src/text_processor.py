@@ -1,6 +1,6 @@
 # text_processor.py
 from typing import List
-import config
+from . import config
 
 class TextProcessor:
     def split_text_into_chunks(self, text: str) -> List[str]:

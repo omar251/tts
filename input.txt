@@ -1,3 +1,0 @@
-Overview
-
-This Python script provides a text-to-speech (TTS) solution that reads text from an input file, converts it to speech using the Microsoft Edge TTS engine, and plays the audio while displaying synchronized text output. The script processes the text in chunks, allowing for smoother playback of long texts.

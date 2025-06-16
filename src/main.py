@@ -6,12 +6,12 @@ from datetime import datetime
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 
-from translator import Translator
-from tts_generator import TTSGenerator
-from audio_player import AudioPlayer
-from text_processor import TextProcessor
-from file_manager import FileManager
-import config
+from .translator import Translator
+from .tts_generator import TTSGenerator
+from .audio_player import AudioPlayer
+from .text_processor import TextProcessor
+from .file_manager import FileManager
+from . import config
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class TTSApplication:
                 chunk_text_file = f"{output_file}_{i}.txt"
                 await self.process_chunk(chunk, chunk_output_file, chunk_text_file, play_queue)
 
-            await play_queue.put(None)  # Signal to stop the play_audio_worker
+            await play_queue.put([None, None])  # Signal to stop the play_audio_worker
             await play_task
 
         except Exception as e:
@@ -70,17 +70,22 @@ class TTSApplication:
         else:
             text = self.translator.translate_text(input_text)
 
+        output_file = None
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
             output_file = os.path.join(config.OUTPUT_DIRECTORY, f"output_{timestamp}")
             await self.talk(text, output_file)
         except FileNotFoundError:
-            logger.error(f"Input file not found.")
-            await self.talk("I have no idea what to say", os.path.join(config.OUTPUT_DIRECTORY, f"empty"))
+            logger.error("Input file not found.")
+            empty_output_file = os.path.join(config.OUTPUT_DIRECTORY, "empty")
+            await self.talk("I have no idea what to say", empty_output_file)
+            output_file = empty_output_file
         except Exception as e:
             logger.error(f"An unexpected error occurred: {e}")
         finally:
-            self.file_manager.cleanup_temp_files(output_file)
+            if output_file is not None:
+                if output_file is not None:
+                    self.file_manager.cleanup_temp_files(output_file)
 
 def main():
     parser = argparse.ArgumentParser(description="Text-to-Speech CLI tool")

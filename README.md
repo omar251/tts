@@ -32,31 +32,51 @@ pip install pygame edge-tts deep-translator
 
 3. Clone or download the project to your local machine.
 
+## Project Structure
+
+```
+tts/
+├── src/                  # Main source code
+│   ├── audio_player.py   # Audio playback management
+│   ├── config.py         # Configuration settings
+│   ├── file_manager.py   # File operations
+│   ├── main.py           # Entry point
+│   ├── text_processor.py # Text processing
+│   ├── translator.py     # Translation functionality
+│   └── tts_generator.py  # TTS generation
+├── examples/             # Sample files
+│   ├── input.txt         # Example input file
+│   └── translated.txt    # Example translated output
+├── output_files/         # Generated audio files
+├── pyproject.toml        # Python project configuration
+└── README.md             # Documentation
+```
+
 ## Usage
 
 The tool can be used in three ways:
 
 1. Default mode (using `INPUT_FILE` from config):
 ```bash
-python main.py
+python -m src.main
 ```
 
 2. Process a specific file:
 ```bash
-python main.py -f input.txt
+python -m src.main -f examples/input.txt
 ```
 
 3. Process direct text input:
 ```bash
-python main.py -t "Hello, how are you?"
+python -m src.main -t "Hello, how are you?"
 ```
 
 ## Configuration
 
-You can modify the following constants in the `config.py` file to customize the tool's behavior:
+You can modify the following constants in the `src/config.py` file to customize the tool's behavior:
 
-- `INPUT_FILE`: Default input text file path
-- `TRANSLATED_FILE`: Path for the translated text file
+- `INPUT_FILE`: Default input text file path (relative to project root)
+- `TRANSLATED_FILE`: Path for the translated text file (relative to project root)
 - `OUTPUT_DIRECTORY`: Directory to store generated audio files
 - `SPECIAL_CHARACTERS`: Characters used to split the text into chunks
 - `DELIMITER`: Delimiter used in word boundary files
@@ -95,6 +115,7 @@ The tool includes error handling for common issues such as missing input files o
 
 - Audio playback relies on the pygame library, which may have platform-specific limitations.
 - Translation quality depends on the Google Translate service.
+- Must be run as a module from the project root directory (`python -m src.main`).
 
 ## Contributing
 
