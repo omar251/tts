@@ -1,19 +1,25 @@
 # file_manager.py
 import os
 import logging
+from .logging_utils import VERBOSE, vprint
 
 logger = logging.getLogger(__name__)
 
 class FileManager:
     def create_output_directory(self, directory: str) -> None:
+        vprint(f"[FileManager] Creating output directory: {directory}")
         os.makedirs(directory, exist_ok=True)
+        vprint(f"[FileManager] Output directory ready.")
 
     def cleanup_temp_files(self, output_file: str) -> None:
         try:
             directory = os.path.dirname(output_file)
+            vprint(f"[FileManager] Cleaning up temporary files in: {directory} (prefix: {os.path.basename(output_file)})")
             for file in os.listdir(directory):
                 if file.startswith(os.path.basename(output_file)):
+                    vprint(f"[FileManager] Removing file: {file}")
                     os.remove(os.path.join(directory, file))
+            vprint(f"[FileManager] Cleanup complete.")
         except Exception as e:
             logger.error(f"Error during cleanup: {e}")
 

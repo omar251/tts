@@ -1,40 +1,44 @@
 # translator.py
-from deep_translator import GoogleTranslator
+from googletrans import Translator as GoogleTranslator
+
+MAX_TRANSLATE_CHARS = 5000
+
+from .logging_utils import VERBOSE, vprint
 
 class Translator:
+    def __init__(self):
+        self.translator = GoogleTranslator()
+
     def translate_file(self, input_file: str, output_file: str) -> None:
-        translated = GoogleTranslator(source='auto', target='en').translate_file(input_file)
+        vprint(f"[Translator] Reading input file: {input_file}")
+        with open(input_file, "r", encoding="utf-8") as f:
+            text = f.read()
+        vprint("[Translator] Translating file content...")
+        translated = self.translate_text(text)
+        vprint(f"[Translator] Writing translated content to: {output_file}")
         with open(output_file, "w", encoding='utf-8') as f:
             f.write(translated)
 
     def translate_text(self, text: str) -> str:
-        return GoogleTranslator(source='auto', target='en').translate(text)
+        vprint("[Translator] Splitting text into chunks...")
+        # Split text into <=5000 char chunks for translation
+        chunks = []
+        current = ""
+        for line in text.splitlines(keepends=True):
+            if len(current) + len(line) > MAX_TRANSLATE_CHARS:
+                if current:
+                    chunks.append(current)
+                    current = ""
+            current += line
+        if current:
+            chunks.append(current)
+        vprint(f"[Translator] {len(chunks)} chunk(s) to translate.")
+        translated_chunks = []
+        for idx, chunk in enumerate([c for c in chunks if c.strip()]):
+            vprint(f"[Translator] Translating chunk {idx+1}/{len(chunks)}...")
+            translated_chunks.append(self.translator.translate(chunk, src='auto', dest='en').text)
+        vprint("[Translator] All chunks translated.")
+        return "".join(translated_chunks)
 
 if __name__ == "__main__":
     import os
-
-    # Demo usage
-    translator = Translator()
-
-    # File translation
-    input_file = "sample_input.txt"
-    output_file = "sample_translated.txt"
-
-    with open(input_file, "w", encoding='utf-8') as f:
-        f.write("Bonjour le monde!")
-
-    translator.translate_file(input_file, output_file)
-
-    print(f"Translated content saved to {output_file}")
-
-    with open(output_file, "r", encoding='utf-8') as f:
-        print(f"Translated text from file: {f.read()}")
-
-    # Direct text translation
-    input_text = "Hola, ¿cómo estás?"
-    translated_text = translator.translate_text(input_text)
-    print(f"Translated text directly: {translated_text}")
-
-    # Clean up
-    os.remove(input_file)
-    os.remove(output_file)

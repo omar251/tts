@@ -1,9 +1,11 @@
 # text_processor.py
 from typing import List
 from . import config
+from .logging_utils import VERBOSE, vprint
 
 class TextProcessor:
     def split_text_into_chunks(self, text: str) -> List[str]:
+        vprint("[TextProcessor] Splitting text into chunks...")
         chunks = []
         current_chunk = ""
         for char in text:
@@ -13,6 +15,7 @@ class TextProcessor:
                 current_chunk = ""
         if current_chunk:
             chunks.append(current_chunk.strip())
+        vprint(f"[TextProcessor] {len(chunks)} chunk(s) created.")
         return chunks
 
 if __name__ == "__main__":

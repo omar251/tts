@@ -8,10 +8,14 @@ import asyncio
 
 logger = logging.getLogger(__name__)
 
+from .logging_utils import VERBOSE, vprint
+
 class TTSGenerator:
     async def generate_tts(self, text: str, audio_file: str, text_file: str) -> Tuple[Optional[str], Optional[str]]:
+        vprint(f"[TTSGenerator] Starting TTS generation for audio file: {audio_file}")
         voice = await self.get_voice()
         try:
+            vprint(f"[TTSGenerator] Using voice: {voice}")
             communicate = edge_tts.Communicate(text, voice)
             word_boundaries = []
 
@@ -28,15 +32,20 @@ class TTSGenerator:
                             text_f.write(word_boundary)
                             word_boundaries.append(word_boundary)
 
+            vprint(f"[TTSGenerator] Finished TTS generation for: {audio_file}")
             return audio_file, text_file
         except Exception as e:
             logger.error(f"An error occurred during TTS generation: {e}")
+            vprint(f"[TTSGenerator] Error during TTS generation for: {audio_file}")
             return None, None
 
     async def get_voice(self) -> str:
+        vprint("[TTSGenerator] Fetching available voices...")
         voices = await VoicesManager.create()
         voice = voices.find(Language="en")
-        return random.choice(voice)["Name"]
+        selected_voice = random.choice(voice)["Name"]
+        vprint(f"[TTSGenerator] Selected voice: {selected_voice}")
+        return selected_voice
 
 if __name__ == "__main__":
     async def main():
