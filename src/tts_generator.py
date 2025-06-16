@@ -5,12 +5,16 @@ import random
 from typing import Tuple, Optional
 import logging
 import asyncio
+import json
+import os
 
 logger = logging.getLogger(__name__)
 
 from .logging_utils import VERBOSE, vprint
 
 class TTSGenerator:
+    _voices_cache_file = "voices_cache.json"  # File to store voices
+
     async def generate_tts(self, text: str, audio_file: str, text_file: str) -> Tuple[Optional[str], Optional[str]]:
         vprint(f"[TTSGenerator] Starting TTS generation for audio file: {audio_file}")
         voice = await self.get_voice()
@@ -40,12 +44,27 @@ class TTSGenerator:
             return None, None
 
     async def get_voice(self) -> str:
-        vprint("[TTSGenerator] Fetching available voices...")
-        voices = await VoicesManager.create()
-        voice = voices.find(Language="en")
-        selected_voice = random.choice(voice)["Name"]
+        voices = await self.load_voices_from_file()
+        if not voices:
+            vprint("[TTSGenerator] Fetching available voices...")
+            voices_manager = await VoicesManager.create()
+            voices = voices_manager.find()
+            await self.save_voices_to_file(voices)
+            vprint(f"[TTSGenerator] Fetched and saved {len(voices)} voices.")
+
+        selected_voice = random.choice(voices)["Name"]
         vprint(f"[TTSGenerator] Selected voice: {selected_voice}")
         return selected_voice
+
+    async def save_voices_to_file(self, voices):
+        with open(self._voices_cache_file, "w") as f:
+            json.dump(voices, f)
+
+    async def load_voices_from_file(self):
+        if os.path.exists(self._voices_cache_file):
+            with open(self._voices_cache_file, "r") as f:
+                return json.load(f)
+        return None
 
 if __name__ == "__main__":
     async def main():

@@ -1,4 +1,3 @@
-# translator.py
 from googletrans import Translator as GoogleTranslator
 
 MAX_TRANSLATE_CHARS = 5000
@@ -8,6 +7,11 @@ from .logging_utils import VERBOSE, vprint
 class Translator:
     def __init__(self):
         self.translator = GoogleTranslator()
+
+    def detect_language(self, text: str) -> str:
+        """Detect the language of the given text."""
+        detection = self.translator.detect(text)
+        return detection.lang
 
     def translate_file(self, input_file: str, output_file: str) -> None:
         vprint(f"[Translator] Reading input file: {input_file}")
@@ -42,3 +46,10 @@ class Translator:
 
 if __name__ == "__main__":
     import os
+    translator = Translator()
+    sample_text = "Bonjour, comment ça va?"
+    print("Translated text:")
+    translated_text = translator.translate_text(sample_text)
+    print(translated_text)
+    detected_language = translator.detect_language(sample_text)
+    print(f"Detected language: {detected_language}")
