@@ -16,21 +16,20 @@ This Python CLI tool provides a flexible text-to-speech (TTS) solution that can 
 
 ## Requirements
 
-- Python 3.7+
-- pygame
-- edge-tts
-- deep-translator
+- Python 3.12+
+- See dependencies in `pyproject.toml`
 
 ## Installation
 
-1. Ensure you have Python 3.7 or later installed on your system.
-2. Install the required packages:
+1. Ensure you have Python 3.12 or later installed on your system.
+2. Clone or download the project to your local machine.
+3. From the project root, install the package and dependencies:
 
 ```bash
-pip install pygame edge-tts deep-translator
+pip install .
 ```
 
-3. Clone or download the project to your local machine.
+This will install all required dependencies and make the `tts` CLI available globally.
 
 ## Project Structure
 
@@ -54,21 +53,24 @@ tts/
 
 ## Usage
 
-The tool can be used in three ways:
+After installation, you can use the CLI from anywhere:
 
-1. Default mode (using `INPUT_FILE` from config):
+1. Default mode (uses `input_file` from config):
+
 ```bash
-python -m src.main
+tts
 ```
 
 2. Process a specific file:
+
 ```bash
-python -m src.main -f examples/input.txt
+tts -f examples/input.txt
 ```
 
 3. Process direct text input:
+
 ```bash
-python -m src.main -t "Hello, how are you?"
+tts -t "Hello, how are you?"
 ```
 
 ### Optional: Translate to a target language
@@ -77,21 +79,24 @@ By default, the tool uses the original text with no translation.
 To translate to a specific language, use the `--language` (or `-l`) flag with the target language code (e.g., `en` for English, `fr` for French):
 
 ```bash
-python -m src.main -t "Bonjour tout le monde" --language en
-python -m src.main -f examples/input.txt --language fr
+tts -t "Bonjour tout le monde" --language en
+tts -f examples/input.txt --language fr
 ```
 
 If `--language` is not provided, the original text is used without translation.
 
 ## Configuration
 
-You can modify the following constants in the `src/config.py` file to customize the tool's behavior:
+You can customize the tool's behavior by editing the `config.yaml` file in the project root:
 
-- `INPUT_FILE`: Default input text file path (relative to project root)
-- `TRANSLATED_FILE`: Path for the translated text file (relative to project root)
-- `OUTPUT_DIRECTORY`: Directory to store generated audio files
-- `SPECIAL_CHARACTERS`: Characters used to split the text into chunks
-- `DELIMITER`: Delimiter used in word boundary files
+- `input_file`: Default input text file path (relative to project root)
+- `translated_file`: Path for the translated text file (relative to project root)
+- `output_directory`: Directory to store generated audio files
+- `special_characters`: Characters used to split the text into chunks
+- `delimiter`: Delimiter used in word boundary files
+- `tts_voice`: Default TTS voice (see `edge-tts --list-voices` for options)
+
+You can also override any setting using environment variables (e.g., `TTS_INPUT_FILE`, `TTS_OUTPUT_DIRECTORY`).
 
 ## Main Components
 
@@ -128,7 +133,6 @@ The tool includes error handling for common issues such as missing input files o
 
 - Audio playback relies on the pygame library, which may have platform-specific limitations.
 - Translation quality depends on the Google Translate service.
-- Must be run as a module from the project root directory (`python -m src.main`).
 
 ## Contributing
 
@@ -136,4 +140,4 @@ Feel free to fork this project, submit issues, or provide pull requests to impro
 
 ## License
 
-[Specify the license under which this tool is released, e.g., MIT, GPL, etc.]
+This project is licensed under the MIT License. See the `LICENSE` file for details.
