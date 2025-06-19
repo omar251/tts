@@ -23,8 +23,16 @@ class Translator:
         with open(output_file, "w", encoding='utf-8') as f:
             f.write(translated)
 
-    def translate_text(self, text: str) -> str:
-        vprint("[Translator] Splitting text into chunks...")
+    def translate_text(self, text: str, target_language: str = None) -> str:
+        """
+        Translate text to the target language if specified.
+        If target_language is None or empty, return the original text.
+        """
+        if not target_language:
+            vprint("[Translator] No target language set. Skipping translation.")
+            return text
+
+        vprint(f"[Translator] Splitting text into chunks for translation to '{target_language}'...")
         # Split text into <=5000 char chunks for translation
         chunks = []
         current = ""
@@ -40,7 +48,7 @@ class Translator:
         translated_chunks = []
         for idx, chunk in enumerate([c for c in chunks if c.strip()]):
             vprint(f"[Translator] Translating chunk {idx+1}/{len(chunks)}...")
-            translated_chunks.append(self.translator.translate(chunk, src='auto', dest='en').text)
+            translated_chunks.append(self.translator.translate(chunk, src='auto', dest=target_language).text)
         vprint("[Translator] All chunks translated.")
         return "".join(translated_chunks)
 
@@ -49,7 +57,7 @@ if __name__ == "__main__":
     translator = Translator()
     sample_text = "Bonjour, comment ça va?"
     print("Translated text:")
-    translated_text = translator.translate_text(sample_text)
+    translated_text = translator.translate_text(sample_text, target_language='en')
     print(translated_text)
     detected_language = translator.detect_language(sample_text)
     print(f"Detected language: {detected_language}")

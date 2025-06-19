@@ -69,7 +69,7 @@ class TTSApplication:
         except Exception as e:
             logger.error(f"An error occurred during TTS and playback: {e}")
 
-    async def run(self, input_text: str = None, is_file: bool = False):
+    async def run(self, input_text: str = None, is_file: bool = False, target_language: str = None):
         vprint("[TTSApplication] Creating output directory if needed...")
         self.file_manager.create_output_directory(config.OUTPUT_DIRECTORY)
 
@@ -86,8 +86,13 @@ class TTSApplication:
             vprint("[TTSApplication] Using provided input text.")
             original_text = input_text
 
-        vprint("[TTSApplication] Translating input text...")
-        translated_text = self.translator.translate_text(original_text)
+        # Only translate if target_language is set and not empty
+        if target_language:
+            vprint(f"[TTSApplication] Translating input text to '{target_language}'...")
+            translated_text = self.translator.translate_text(original_text, target_language=target_language)
+        else:
+            vprint("[TTSApplication] No translation requested. Using original text.")
+            translated_text = original_text
 
         # Step 2: Text Processing (split into chunks)
         vprint("[TTSApplication] Splitting translated text into chunks...")
@@ -123,6 +128,7 @@ def main():
     group.add_argument("-f", "--file", help="Input file path")
     group.add_argument("-t", "--text", help="Input text")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
+    parser.add_argument("-l", "--language", help="Target language for translation (if not set, no translation will be performed)", default=None)
 
     args = parser.parse_args()
     logging_utils.VERBOSE = args.verbose
@@ -130,15 +136,18 @@ def main():
     vprint("[Main] Initializing TTSApplication...")
     app = TTSApplication()
 
+    # If language flag is set to empty string, treat as no translation
+    target_language = args.language if args.language else None
+
     if args.file:
         vprint(f"[Main] File input mode. File: {args.file}")
-        asyncio.run(app.run(args.file, is_file=True))
+        asyncio.run(app.run(args.file, is_file=True, target_language=target_language))
     elif args.text:
         vprint("[Main] Text input mode.")
-        asyncio.run(app.run(args.text, is_file=False))
+        asyncio.run(app.run(args.text, is_file=False, target_language=target_language))
     else:
         vprint("[Main] No input provided. Using default behavior.")
-        asyncio.run(app.run())
+        asyncio.run(app.run(target_language=target_language))
 
 if __name__ == "__main__":
     main()

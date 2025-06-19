@@ -7,6 +7,7 @@ import logging
 import asyncio
 import json
 import os
+from googletrans import Translator as GoogleTranslator
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ class TTSGenerator:
 
     async def generate_tts(self, text: str, audio_file: str, text_file: str) -> Tuple[Optional[str], Optional[str]]:
         vprint(f"[TTSGenerator] Starting TTS generation for audio file: {audio_file}")
-        voice = await self.get_voice()
+        voice = await self.get_voice(text)
         try:
             vprint(f"[TTSGenerator] Using voice: {voice}")
             communicate = edge_tts.Communicate(text, voice)
@@ -43,7 +44,7 @@ class TTSGenerator:
             vprint(f"[TTSGenerator] Error during TTS generation for: {audio_file}")
             return None, None
 
-    async def get_voice(self) -> str:
+    async def get_voice(self, text: str) -> str:
         voices = await self.load_voices_from_file()
         if not voices:
             vprint("[TTSGenerator] Fetching available voices...")
@@ -52,9 +53,23 @@ class TTSGenerator:
             await self.save_voices_to_file(voices)
             vprint(f"[TTSGenerator] Fetched and saved {len(voices)} voices.")
 
-        selected_voice = random.choice(voices)["Name"]
+        detected_language = self.detect_language(text)
+        vprint(f"[TTSGenerator] Detected language: {detected_language}")
+
+        # Filter voices by detected language
+        filtered_voices = [voice for voice in voices if voice["Language"] == detected_language]
+        if not filtered_voices:
+            vprint(f"[TTSGenerator] No voices found for language: {detected_language}. Using default English voices.")
+            filtered_voices = voices
+
+        selected_voice = random.choice(filtered_voices)["Name"]
         vprint(f"[TTSGenerator] Selected voice: {selected_voice}")
         return selected_voice
+
+    def detect_language(self, text: str) -> str:
+        translator = GoogleTranslator()
+        detection = translator.detect(text)
+        return detection.lang
 
     async def save_voices_to_file(self, voices):
         with open(self._voices_cache_file, "w") as f:
