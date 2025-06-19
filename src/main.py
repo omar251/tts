@@ -11,7 +11,7 @@ from .tts_generator import TTSGenerator
 from .audio_player import AudioPlayer
 from .text_processor import TextProcessor
 from .file_manager import FileManager
-from . import config
+from .settings import settings
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -71,12 +71,12 @@ class TTSApplication:
 
     async def run(self, input_text: str = None, is_file: bool = False, target_language: str = None):
         vprint("[TTSApplication] Creating output directory if needed...")
-        self.file_manager.create_output_directory(config.OUTPUT_DIRECTORY)
+        self.file_manager.create_output_directory(settings.output_directory)
 
         # Step 1: Input Handling and Translation
         if input_text is None:
             vprint("[TTSApplication] No input provided. Using default input file.")
-            with open(config.INPUT_FILE, "r", encoding="utf-8") as file:
+            with open(settings.input_file, "r", encoding="utf-8") as file:
                 original_text = file.read().strip()
         elif is_file:
             vprint(f"[TTSApplication] Reading input from file: {input_text}")
@@ -100,19 +100,19 @@ class TTSApplication:
 
         # Step 2b: Reconstruct translated file from chunks
         reconstructed_translated_text = "".join(chunks)
-        vprint(f"[TTSApplication] Writing translated text to file: {config.TRANSLATED_FILE}")
-        with open(config.TRANSLATED_FILE, "w", encoding="utf-8") as f:
+        vprint(f"[TTSApplication] Writing translated text to file: {settings.translated_file}")
+        with open(settings.translated_file, "w", encoding="utf-8") as f:
             f.write(reconstructed_translated_text)
 
         output_file = None
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-            output_file = os.path.join(config.OUTPUT_DIRECTORY, f"output_{timestamp}")
+            output_file = os.path.join(settings.output_directory, f"output_{timestamp}")
             vprint(f"[TTSApplication] Starting TTS and playback. Output base: {output_file}")
             await self.talk(reconstructed_translated_text, output_file)
         except FileNotFoundError:
             logger.error("Input file not found.")
-            empty_output_file = os.path.join(config.OUTPUT_DIRECTORY, "empty")
+            empty_output_file = os.path.join(settings.output_directory, "empty")
             await self.talk("I have no idea what to say", empty_output_file)
             output_file = empty_output_file
         except Exception as e:

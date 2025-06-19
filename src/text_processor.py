@@ -1,6 +1,6 @@
 # text_processor.py
 from typing import List
-from . import config
+from .settings import settings
 from .logging_utils import VERBOSE, vprint
 
 class TextProcessor:
@@ -10,7 +10,7 @@ class TextProcessor:
         current_chunk = ""
         for char in text:
             current_chunk += char
-            if char in config.SPECIAL_CHARACTERS:
+            if char in settings.special_characters:
                 chunks.append(current_chunk.strip())
                 current_chunk = ""
         if current_chunk:

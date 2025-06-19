@@ -12,6 +12,7 @@ from googletrans import Translator as GoogleTranslator
 logger = logging.getLogger(__name__)
 
 from .logging_utils import VERBOSE, vprint
+from .settings import settings
 
 class TTSGenerator:
     _voices_cache_file = "voices_cache.json"  # File to store voices
@@ -45,6 +46,11 @@ class TTSGenerator:
             return None, None
 
     async def get_voice(self, text: str) -> str:
+        # If a default voice is specified in settings, use it
+        if settings.tts_voice:
+            vprint(f"[TTSGenerator] Using default voice from settings: {settings.tts_voice}")
+            return settings.tts_voice
+
         voices = await self.load_voices_from_file()
         if not voices:
             vprint("[TTSGenerator] Fetching available voices...")
