@@ -7,7 +7,7 @@ This Python CLI tool provides a flexible text-to-speech (TTS) solution that can 
 ## Features
 
 - Accepts input from a file or direct text input via command-line arguments
-- Translates input text to English (if needed) using Google Translate
+- Optionally translates input text to a target language using Google Translate (only if `--language` flag is set)
 - Converts text to speech using Microsoft Edge TTS
 - Plays audio with synchronized text display
 - Processes text in chunks for better handling of long texts
@@ -71,6 +71,18 @@ python -m src.main -f examples/input.txt
 python -m src.main -t "Hello, how are you?"
 ```
 
+### Optional: Translate to a target language
+
+By default, the tool uses the original text with no translation.  
+To translate to a specific language, use the `--language` (or `-l`) flag with the target language code (e.g., `en` for English, `fr` for French):
+
+```bash
+python -m src.main -t "Bonjour tout le monde" --language en
+python -m src.main -f examples/input.txt --language fr
+```
+
+If `--language` is not provided, the original text is used without translation.
+
 ## Configuration
 
 You can modify the following constants in the `src/config.py` file to customize the tool's behavior:
@@ -89,7 +101,8 @@ The main application class that orchestrates the entire TTS process.
 
 ### `Translator` class
 
-Handles text translation using Google Translate.
+Handles text translation using Google Translate.  
+Translation is only performed if a target language is specified via the `--language` flag.
 
 ### `TTSGenerator` class
 
