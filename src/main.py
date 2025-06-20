@@ -16,7 +16,7 @@ from .settings import settings
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-from .logging_utils import VERBOSE, vprint
+from .logging_utils import vprint
 from . import logging_utils
 
 class TTSApplication:
@@ -39,7 +39,8 @@ class TTSApplication:
     async def play_audio_worker(self, play_queue: asyncio.Queue) -> None:
         vprint("[TTSApplication] Audio playback worker started.")
         while True:
-            audio_file, text_file = await play_queue.get()
+            item = await play_queue.get()
+            audio_file, text_file = item[0], item[1]
             if audio_file is None:
                 vprint("[TTSApplication] Audio playback worker stopping.")
                 break
@@ -69,7 +70,7 @@ class TTSApplication:
         except Exception as e:
             logger.error(f"An error occurred during TTS and playback: {e}")
 
-    async def run(self, input_text: str = None, is_file: bool = False, target_language: str = None):
+    async def run(self, input_text: str | None = None, is_file: bool = False, target_language: str | None = None):
         vprint("[TTSApplication] Creating output directory if needed...")
         self.file_manager.create_output_directory(settings.output_directory)
 

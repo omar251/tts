@@ -11,12 +11,12 @@ output_directory: output_files
 
 # Characters used to split the text into chunks
 special_characters:
-  - .
-  - ?
-  - !
-  - ;
-  - :
-  - \n
+  - "."
+  - "?"
+  - "!"
+  - ";"
+  - ":"
+  - '\n'
 
 # Delimiter used in word boundary files.
 # Use a multiline string if the delimiter contains newlines.
@@ -26,3 +26,7 @@ delimiter: |
 # Default TTS voice to use (e.g., en-US-AriaNeural)
 # You can list available voices using `edge-tts --list-voices`
 tts_voice: en-US-AriaNeural
+
+# Maximum characters per chunk for translation (default: 5000)
+# Google Translate has limits on text length per request
+max_translate_chars: 5000

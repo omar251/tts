@@ -1,8 +1,7 @@
 from googletrans import Translator as GoogleTranslator
 
-MAX_TRANSLATE_CHARS = 5000
-
 from .logging_utils import VERBOSE, vprint
+from .settings import settings
 
 class Translator:
     def __init__(self):
@@ -23,7 +22,7 @@ class Translator:
         with open(output_file, "w", encoding='utf-8') as f:
             f.write(translated)
 
-    def translate_text(self, text: str, target_language: str = None) -> str:
+    def translate_text(self, text: str, target_language: str | None = None) -> str:
         """
         Translate text to the target language if specified.
         If target_language is None or empty, return the original text.
@@ -33,11 +32,12 @@ class Translator:
             return text
 
         vprint(f"[Translator] Splitting text into chunks for translation to '{target_language}'...")
-        # Split text into <=5000 char chunks for translation
+        # Split text into chunks for translation (configurable size, default 5000)
+        max_chars = getattr(settings, 'max_translate_chars', 5000)
         chunks = []
         current = ""
         for line in text.splitlines(keepends=True):
-            if len(current) + len(line) > MAX_TRANSLATE_CHARS:
+            if len(current) + len(line) > max_chars:
                 if current:
                     chunks.append(current)
                     current = ""

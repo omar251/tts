@@ -9,11 +9,20 @@ import logging
 logger = logging.getLogger(__name__)
 
 class AudioPlayer:
+    def __init__(self):
+        self._mixer_initialized = False
+
+    def _ensure_mixer_initialized(self):
+        """Initialize pygame mixer if not already initialized."""
+        if not self._mixer_initialized:
+            pygame.mixer.init()
+            self._mixer_initialized = True
+
     def play_audio(self, audio_file: str, text_file: str) -> None:
         try:
             word_boundaries = self.load_word_boundaries(text_file)
 
-            pygame.mixer.init()
+            self._ensure_mixer_initialized()
             sound = pygame.mixer.Sound(audio_file)
             sound.play()
 
@@ -25,8 +34,22 @@ class AudioPlayer:
                 self.display_synchronized_text(word_boundaries, elapsed_time)
                 pygame.time.wait(10)  # Short sleep to avoid CPU hogging
 
+        except pygame.error as e:
+            logger.error(f"Pygame error during audio playback: {e}")
+        except FileNotFoundError as e:
+            logger.error(f"Audio or text file not found: {e}")
         except Exception as e:
             logger.error(f"An error occurred during audio playback: {e}")
+        finally:
+            # Clean up pygame resources
+            if self._mixer_initialized:
+                pygame.mixer.stop()
+
+    def cleanup(self):
+        """Clean up pygame resources."""
+        if self._mixer_initialized:
+            pygame.mixer.quit()
+            self._mixer_initialized = False
 
     def load_word_boundaries(self, text_file: str) -> List[List[str]]:
         with open(text_file, "r") as f:

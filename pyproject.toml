@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "A flexible CLI Text-to-Speech tool with translation and chunked playback."
 readme = "README.md"
 requires-python = ">=3.12"
-authors = [{ name = "", email = "" }]
+authors = [{ name = "TTS CLI Author", email = "author@example.com" }]
 license = { file = "LICENSE" }
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -16,7 +16,15 @@ dependencies = [
     "googletrans==4.0.0rc1",
     "pygame>=2.6.1",
     "pyyaml>=6.0.2",
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+    "pydantic>=2.5.0",
+    "PyPDF2>=3.0.1",
 ]
+
+[project.optional-dependencies]
+test = ["pytest>=7.4.0", "pytest-cov>=4.1.0", "pytest-asyncio>=0.21.0"]
+dev = ["black>=23.0.0", "flake8>=6.0.0", "mypy>=1.5.0"]
 
 [project.scripts]
 tts = "src.main:main"
