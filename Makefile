@@ -15,6 +15,9 @@ help:
 	@echo "  clean        - Clean build artifacts"
 	@echo "  build        - Build package"
 	@echo "  run-example  - Run example with sample text"
+	@echo "  run-api      - Run basic TTS API server"
+	@echo "  run-web      - Run unified web server (CLI + Web)"
+	@echo "  run-web-prod - Run web server in production mode"
 	@echo "  security     - Run security checks"
 	@echo "  docs         - Generate documentation"
 
@@ -92,9 +95,15 @@ run-example-translate:
 run-verbose:
 	python -m src.main -t "Hello world!" --verbose
 
-# API server
+# API servers
 run-api:
 	uvicorn src.api_server:app --reload --host 0.0.0.0 --port 8000
+
+run-web:
+	python -m src.web_server --reload
+
+run-web-prod:
+	python -m src.web_server --host 0.0.0.0 --port 8000
 
 # Documentation
 docs:

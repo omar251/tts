@@ -1,4 +1,5 @@
 /output_files
+/output_audio
 /test
 /examples
 /build
@@ -6,3 +7,4 @@
 .ropeproject
 __pycache__
 *egg-info
+*.wav
