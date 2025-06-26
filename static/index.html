@@ -27,6 +27,42 @@
             margin: 2rem auto; /* Center container with margin */
         }
 
+        /* Word highlighting styles */
+        .word-highlight {
+            background: linear-gradient(120deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 2px 4px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+            transition: all 0.2s ease-in-out;
+            font-weight: 600;
+        }
+
+        .word-highlight.pulse {
+            animation: wordPulse 0.3s ease-in-out;
+        }
+
+        @keyframes wordPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Text display area for word highlighting */
+        #current-paragraph {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            font-family: 'Inter', sans-serif;
+            color: #374151;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
         textarea, select {
             border-radius: 0.5rem; /* Consistent rounded corners */
             border-color: #d1d5db; /* Tailwind gray-300 */
@@ -289,9 +325,141 @@
         let isStreamProcessing = false;
         let isAudioSetup = false;
         let isStopping = false;
+        
+        // Word highlighting state
+        let currentParagraphText = '';
+        let currentWords = [];
+        let currentWordIndex = 0;
+        let wordHighlightInterval = null;
+        let estimatedWordsPerSecond = 3; // Average speaking rate
 
         // --- Constants ---
         const WS_RECONNECT_DELAY = 5000;
+
+        // --- Word Highlighting Functions ---
+        function splitTextIntoWords(text) {
+            // Split text into words while preserving punctuation and spacing
+            return text.match(/\S+|\s+/g) || [];
+        }
+
+        function displayParagraphWithWords(text) {
+            currentParagraphText = text;
+            currentWords = splitTextIntoWords(text);
+            currentWordIndex = 0;
+            
+            // Create HTML with each word wrapped in a span
+            const wordsHtml = currentWords.map((word, index) => {
+                if (word.trim()) {
+                    return `<span class="word" data-word-index="${index}">${word}</span>`;
+                } else {
+                    return word; // Preserve whitespace as-is
+                }
+            }).join('');
+            
+            currentParagraphDiv.innerHTML = wordsHtml;
+            currentParagraphDiv.classList.remove('hidden');
+            
+            console.log(`Displaying paragraph with ${currentWords.length} words`);
+        }
+
+        function highlightCurrentWord() {
+            // Remove previous highlighting
+            const previousHighlight = currentParagraphDiv.querySelector('.word-highlight');
+            if (previousHighlight) {
+                previousHighlight.classList.remove('word-highlight', 'pulse');
+            }
+            
+            // Find current word element
+            const currentWordElement = currentParagraphDiv.querySelector(`[data-word-index="${currentWordIndex}"]`);
+            if (currentWordElement && currentWordElement.textContent.trim()) {
+                currentWordElement.classList.add('word-highlight', 'pulse');
+                
+                // Scroll to keep current word visible
+                currentWordElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest',
+                    inline: 'nearest'
+                });
+                
+                console.log(`Highlighting word ${currentWordIndex}: "${currentWordElement.textContent.trim()}"`);
+            }
+        }
+
+        function startWordHighlighting(audioDuration) {
+            stopWordHighlighting(); // Clear any existing highlighting
+            
+            if (!currentWords.length) return;
+            
+            // Calculate timing based on audio duration and word count
+            const totalWords = currentWords.filter(word => word.trim()).length;
+            const wordDuration = audioDuration / totalWords * 1000; // Convert to milliseconds
+            
+            console.log(`Starting word highlighting: ${totalWords} words over ${audioDuration}s (${wordDuration.toFixed(0)}ms per word)`);
+            
+            currentWordIndex = 0;
+            highlightCurrentWord();
+            
+            // Use both interval-based and time-based highlighting for better accuracy
+            wordHighlightInterval = setInterval(() => {
+                // Sync with actual audio time if available
+                if (singleAudioPlayer.currentTime && singleAudioPlayer.duration) {
+                    const progress = singleAudioPlayer.currentTime / singleAudioPlayer.duration;
+                    const expectedWordIndex = Math.floor(progress * totalWords);
+                    
+                    // Find the actual word index (skipping whitespace)
+                    let actualWordIndex = 0;
+                    let wordCount = 0;
+                    for (let i = 0; i < currentWords.length; i++) {
+                        if (currentWords[i].trim()) {
+                            if (wordCount === expectedWordIndex) {
+                                actualWordIndex = i;
+                                break;
+                            }
+                            wordCount++;
+                        }
+                    }
+                    
+                    if (actualWordIndex !== currentWordIndex) {
+                        currentWordIndex = actualWordIndex;
+                        highlightCurrentWord();
+                    }
+                } else {
+                    // Fallback to simple interval-based highlighting
+                    currentWordIndex++;
+                    
+                    // Skip whitespace-only words
+                    while (currentWordIndex < currentWords.length && !currentWords[currentWordIndex]?.trim()) {
+                        currentWordIndex++;
+                    }
+                    
+                    if (currentWordIndex < currentWords.length) {
+                        highlightCurrentWord();
+                    } else {
+                        stopWordHighlighting();
+                    }
+                }
+            }, Math.min(wordDuration, 200)); // Update at least every 200ms for smooth highlighting
+        }
+
+        function stopWordHighlighting() {
+            if (wordHighlightInterval) {
+                clearInterval(wordHighlightInterval);
+                wordHighlightInterval = null;
+            }
+            
+            // Remove all highlighting
+            const highlighted = currentParagraphDiv.querySelectorAll('.word-highlight');
+            highlighted.forEach(el => el.classList.remove('word-highlight', 'pulse'));
+            
+            currentWordIndex = 0;
+        }
+
+        function resetWordHighlighting() {
+            stopWordHighlighting();
+            currentParagraphText = '';
+            currentWords = [];
+            currentWordIndex = 0;
+        }
 
         // --- Utility Functions ---
         function showMessage(type, message) {
@@ -312,12 +480,12 @@
 
         function displayParagraph(text) {
             console.log("Displaying paragraph:", text);
-            currentParagraphDiv.textContent = text || " ";
-            currentParagraphDiv.classList.remove('hidden');
+            displayParagraphWithWords(text || " ");
         }
 
         function hideParagraph() {
             console.log("Hiding paragraph display");
+            resetWordHighlighting();
             currentParagraphDiv.classList.add('hidden');
             currentParagraphDiv.textContent = '';
         }
@@ -528,6 +696,15 @@
                     console.log("Audio playback started:", audioChunk.url);
                     updatePlayPauseIcon(false);
                     restartButton.disabled = false;
+                    
+                    // Start word highlighting based on audio duration
+                    if (singleAudioPlayer.duration && !isNaN(singleAudioPlayer.duration)) {
+                        startWordHighlighting(singleAudioPlayer.duration);
+                    } else {
+                        // Fallback: estimate duration based on text length and speaking rate
+                        const estimatedDuration = currentWords.filter(w => w.trim()).length / estimatedWordsPerSecond;
+                        startWordHighlighting(estimatedDuration);
+                    }
                 }).catch(e => {
                     console.error("Audio play failed:", e);
                     showMessage('error', `Audio playback failed: ${e.message}. Try interacting with the page first.`);
@@ -628,6 +805,7 @@
             isPlaying = false;
             restartButton.disabled = true;
             updatePlayPauseIcon(true);
+            stopWordHighlighting(); // Stop word highlighting when audio ends
             playNextAudio();
         };
 
@@ -637,6 +815,7 @@
             isPlaying = false;
             updatePlayPauseIcon(true);
             restartButton.disabled = true;
+            stopWordHighlighting(); // Stop word highlighting on error
             hideParagraph();
             playNextAudio();
         };
@@ -646,6 +825,17 @@
              if (!singleAudioPlayer.src || !isAudioSetup) return;
              console.log("Restart button clicked");
              singleAudioPlayer.currentTime = 0;
+             
+             // Restart word highlighting from the beginning
+             if (currentWords.length > 0) {
+                 if (singleAudioPlayer.duration && !isNaN(singleAudioPlayer.duration)) {
+                     startWordHighlighting(singleAudioPlayer.duration);
+                 } else {
+                     const estimatedDuration = currentWords.filter(w => w.trim()).length / estimatedWordsPerSecond;
+                     startWordHighlighting(estimatedDuration);
+                 }
+             }
+             
              if (singleAudioPlayer.paused) {
                  singleAudioPlayer.play().then(() => updatePlayPauseIcon(false)).catch(e => console.error("Play failed:", e));
              }
@@ -654,10 +844,21 @@
          playPauseButton.addEventListener('click', () => {
              if (!singleAudioPlayer.src || !isAudioSetup) return;
              if (singleAudioPlayer.paused) {
-                 singleAudioPlayer.play().then(() => updatePlayPauseIcon(false)).catch(e => console.error("Play failed:", e));
+                 singleAudioPlayer.play().then(() => {
+                     updatePlayPauseIcon(false);
+                     // Resume word highlighting if we have words loaded
+                     if (currentWords.length > 0 && !wordHighlightInterval) {
+                         const remainingDuration = singleAudioPlayer.duration - singleAudioPlayer.currentTime;
+                         if (remainingDuration > 0) {
+                             startWordHighlighting(remainingDuration);
+                         }
+                     }
+                 }).catch(e => console.error("Play failed:", e));
              } else {
                  singleAudioPlayer.pause();
                  updatePlayPauseIcon(true);
+                 // Pause word highlighting
+                 stopWordHighlighting();
              }
          });
 
