@@ -93,6 +93,7 @@ class StreamTTSRequest(BaseModel):
     text: str
     voice: Optional[str] = None
     language: Optional[str] = None
+    target_language: Optional[str] = None # New field for translation
     client_id: int
     
     @field_validator("text")
@@ -189,6 +190,30 @@ async def health_check():
     """Health check endpoint using the unified service."""
     return await tts_service.health_check()
 
+@app.get("/api/translation_languages")
+async def get_available_translation_languages():
+    """Get list of available translation languages.
+
+    This is a simplified list for demonstration. In a real application,
+    this might be dynamically fetched from a translation service.
+    """
+    # This list can be expanded or fetched dynamically from a translation API
+    languages = [
+        {"code": "en", "name": "English"},
+        {"code": "es", "name": "Spanish"},
+        {"code": "fr", "name": "French"},
+        {"code": "de", "name": "German"},
+        {"code": "it", "name": "Italian"},
+        {"code": "pt", "name": "Portuguese"},
+        {"code": "zh-CN", "name": "Chinese (Simplified)"},
+        {"code": "ja", "name": "Japanese"},
+        {"code": "ko", "name": "Korean"},
+        {"code": "ru", "name": "Russian"},
+        {"code": "ar", "name": "Arabic"},
+        {"code": "hi", "name": "Hindi"},
+    ]
+    return languages
+
 # --- WebSocket Endpoints ---
 @app.websocket("/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: int):
@@ -230,7 +255,7 @@ async def stream_tts_endpoint(request: StreamTTSRequest):
         failed_count = 0
         
         async for audio_file, audio_url, paragraph_text in tts_service.stream_tts_web(
-            request.text, request.voice, request.language
+            request.text, request.voice, request.language, request.target_language
         ):
             try:
                 # Send audio URL and text to client

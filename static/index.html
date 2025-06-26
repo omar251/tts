@@ -208,6 +208,14 @@
             </select>
         </div>
 
+        <div>
+            <label for="target-language-select" class="block text-sm font-medium text-gray-700 mb-1">Translate To (Optional):</label>
+            <select id="target-language-select" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-white">
+                <option value="">-- Do Not Translate --</option>
+                <!-- Languages will be loaded here by JavaScript -->
+            </select>
+        </div>
+
         <button id="stream-button" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 action-button disabled:opacity-50 disabled:cursor-not-allowed" disabled>
             <span id="stream-button-icon"><i data-lucide="play-circle" class="w-5 h-5"></i></span>
             <span id="stream-button-text">Stream Audio</span>
@@ -248,6 +256,7 @@
         // --- DOM Element References ---
         const textInput = document.getElementById('text');
         const voiceSelect = document.getElementById('voice-select');
+        const targetLanguageSelect = document.getElementById('target-language-select');
         const streamButton = document.getElementById('stream-button');
         const audioContainer = document.getElementById('audio-container');
         const messageBox = document.getElementById('message-box');
@@ -351,6 +360,35 @@
                 voiceSelect.innerHTML = '<option value="">Error loading voices</option>';
                 showMessage('error', `Failed to load voices: ${error.message}. Using default server voice.`);
                  voiceSelect.disabled = true;
+            }
+        }
+
+        async function fetchTranslationLanguages() {
+            targetLanguageSelect.disabled = true;
+            try {
+                const response = await fetch('/api/translation_languages');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const languages = await response.json();
+                if (languages.error) throw new Error(languages.error);
+
+                targetLanguageSelect.innerHTML = '<option value="">-- Do Not Translate --</option>';
+                if (languages && languages.length > 0) {
+                    languages.forEach(lang => {
+                        const option = document.createElement('option');
+                        option.value = lang.code;
+                        option.textContent = lang.name;
+                        targetLanguageSelect.appendChild(option);
+                    });
+                    targetLanguageSelect.disabled = false;
+                } else {
+                    targetLanguageSelect.innerHTML = '<option value="">No translation languages found</option>';
+                    showMessage('warning', 'Could not fetch translation languages.');
+                }
+            } catch (error) {
+                console.error("Error fetching translation languages:", error);
+                targetLanguageSelect.innerHTML = '<option value="">Error loading languages</option>';
+                showMessage('error', `Failed to load translation languages: ${error.message}.`);
+                targetLanguageSelect.disabled = true;
             }
         }
 
@@ -540,12 +578,13 @@
              showMessage('info', 'Initiating stream request...');
 
              const selectedVoice = voiceSelect.value || null;
+             const targetLanguage = targetLanguageSelect.value || null;
 
             try {
                 const response = await fetch('/api/tts/stream', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text, voice: selectedVoice, client_id: clientId })
+                    body: JSON.stringify({ text, voice: selectedVoice, target_language: targetLanguage, client_id: clientId })
                 });
                 const result = await response.json();
                 console.log("POST /api/tts/stream response:", result);
@@ -658,6 +697,7 @@
          function initializeApp() {
              console.log("Initializing App...");
              fetchVoices();
+             fetchTranslationLanguages();
              connectWebSocket();
              lucide.createIcons(); // Initial icon creation
              resetAudioPlayerUI();

@@ -66,7 +66,7 @@ class TTSService:
         logger.info("CLI TTS streaming completed")
     
     async def stream_tts_web(self, text: str, voice: Optional[str] = None, 
-                           target_language: Optional[str] = None) -> AsyncGenerator[Tuple[str, str, str], None]:
+                           language: Optional[str] = None, target_language: Optional[str] = None) -> AsyncGenerator[Tuple[str, str, str], None]:
         """
         Stream TTS for web interface using CLI components.
         
@@ -87,7 +87,7 @@ class TTSService:
             # Step 1: Translation (if requested)
             if target_language:
                 logger.info(f"Translating text to {target_language}")
-                processed_text = self.tts_app.translator.translate_text(text, target_language)
+                processed_text = self.tts_app.translator.translate_text(text, target_language=target_language)
             else:
                 processed_text = text
             
