@@ -31,15 +31,34 @@ python -m src.main -t "This is a test of streaming TTS" --verbose
 ## 🌐 **2. Web Interface (New)**
 
 ### Start Web Server
+
+#### Option 1: Using CLI --server option (Recommended)
 ```bash
 # Development mode (auto-reload)
 make run-web
+# or
+python -m src.main --server --reload
 
 # Production mode
 make run-web-prod
+# or
+python -m src.main --server --host 0.0.0.0 --port 8000
 
-# Manual start
+# Custom configuration
+python -m src.main --server --host 0.0.0.0 --port 8080 --verbose
+```
+
+#### Option 2: Direct web server
+```bash
+# Development mode (auto-reload)
+make run-web-direct
+# or
 python -m src.web_server --reload
+
+# Production mode
+make run-web-prod-direct
+# or
+python -m src.web_server --host 0.0.0.0 --port 8000
 ```
 
 ### Access Web Interface

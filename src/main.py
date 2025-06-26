@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 from .logging_utils import vprint
 from . import logging_utils
+from . import web_server
 
 class TTSApplication:
     def __init__(self):
@@ -134,31 +135,82 @@ class TTSApplication:
                 vprint(f"[TTSApplication] Cleaned up {cleanup_count} files.")
 
 def main():
-    parser = argparse.ArgumentParser(description="Text-to-Speech CLI tool")
+    parser = argparse.ArgumentParser(
+        description="Text-to-Speech CLI tool with web server capability",
+        epilog="""
+Examples:
+  # CLI mode (default)
+  %(prog)s -t "Hello world"
+  %(prog)s -f input.txt --language en
+  
+  # Web server mode
+  %(prog)s --server
+  %(prog)s --server --host 0.0.0.0 --port 8080
+  %(prog)s --server --reload --verbose
+        """,
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    
+    # CLI mode arguments
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument("-f", "--file", help="Input file path")
     group.add_argument("-t", "--text", help="Input text")
-    parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     parser.add_argument("-l", "--language", help="Target language for translation (if not set, no translation will be performed)", default=None)
+    
+    # Server mode arguments
+    parser.add_argument("--server", action="store_true", help="Run the web server instead of CLI mode")
+    parser.add_argument("--host", default="127.0.0.1", help="Host to bind to (only used with --server)")
+    parser.add_argument("--port", type=int, default=8000, help="Port to bind to (only used with --server)")
+    parser.add_argument("--reload", action="store_true", help="Enable auto-reload for development (only used with --server)")
+    
+    # Common arguments
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
 
-    args = parser.parse_args()
+    args, remaining_args = parser.parse_known_args()
     logging_utils.VERBOSE = args.verbose
 
-    vprint("[Main] Initializing TTSApplication...")
-    app = TTSApplication()
+    # Validate arguments
+    if not args.server and (args.host != "127.0.0.1" or args.port != 8000 or args.reload):
+        parser.error("--host, --port, and --reload can only be used with --server")
+    
+    if args.server and (args.file or args.text):
+        parser.error("Cannot use --file or --text with --server mode")
 
-    # If language flag is set to empty string, treat as no translation
-    target_language = args.language if args.language else None
-
-    if args.file:
-        vprint(f"[Main] File input mode. File: {args.file}")
-        asyncio.run(app.run(args.file, is_file=True, target_language=target_language))
-    elif args.text:
-        vprint("[Main] Text input mode.")
-        asyncio.run(app.run(args.text, is_file=False, target_language=target_language))
+    if args.server:
+        vprint("[Main] Starting web server...")
+        # Pass server-specific arguments to web_server.main()
+        import sys
+        server_args = [sys.argv[0]]
+        if args.host != "127.0.0.1":
+            server_args.extend(["--host", args.host])
+        if args.port != 8000:
+            server_args.extend(["--port", str(args.port)])
+        if args.reload:
+            server_args.append("--reload")
+        if args.verbose:
+            server_args.extend(["--log-level", "debug"])
+        
+        # Add any remaining arguments
+        server_args.extend(remaining_args)
+        
+        sys.argv = server_args
+        web_server.main()
     else:
-        vprint("[Main] No input provided. Using default behavior.")
-        asyncio.run(app.run(target_language=target_language))
+        vprint("[Main] Initializing TTSApplication...")
+        app = TTSApplication()
+
+        # If language flag is set to empty string, treat as no translation
+        target_language = args.language if args.language else None
+
+        if args.file:
+            vprint(f"[Main] File input mode. File: {args.file}")
+            asyncio.run(app.run(args.file, is_file=True, target_language=target_language))
+        elif args.text:
+            vprint("[Main] Text input mode.")
+            asyncio.run(app.run(args.text, is_file=False, target_language=target_language))
+        else:
+            vprint("[Main] No input provided. Using default behavior.")
+            asyncio.run(app.run(target_language=target_language))
 
 if __name__ == "__main__":
     main()

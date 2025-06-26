@@ -103,14 +103,33 @@ If `--language` is not provided, the original text is used without translation.
 
 ### Web Interface
 
-Start the web server:
+You can start the web server in two ways:
+
+#### Option 1: Using the CLI --server option (Recommended)
 
 ```bash
-# Start the web server
+# Start the web server with default settings
+python -m src.main --server
+
+# Start with custom host and port
+python -m src.main --server --host 0.0.0.0 --port 8080
+
+# Development mode with auto-reload
+python -m src.main --server --reload --verbose
+
+# Or use make shortcuts
+make run-web          # Development mode
+make run-web-prod     # Production mode
+```
+
+#### Option 2: Direct web server
+
+```bash
+# Start the web server directly
 python -m src.web_server
 
 # Or use make
-make run-web
+make run-web-direct
 
 # Access the web interface at http://localhost:8000
 ```

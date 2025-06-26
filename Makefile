@@ -15,9 +15,11 @@ help:
 	@echo "  clean        - Clean build artifacts"
 	@echo "  build        - Build package"
 	@echo "  run-example  - Run example with sample text"
-	@echo "  run-web      - Run unified web server (CLI + Web)"
-	@echo "  run-web-prod - Run web server in production mode"
+	@echo "  run-web      - Run web server via CLI --server option (dev mode)"
+	@echo "  run-web-prod - Run web server via CLI --server option (production mode)"
+	@echo "  run-web-direct - Run web server directly (dev mode)"
 	@echo "  test-file-management - Test unified file management system"
+	@echo "  test-server-option   - Test CLI --server option functionality"
 	@echo "  security     - Run security checks"
 	@echo "  docs         - Generate documentation"
 
@@ -43,6 +45,9 @@ test-unit:
 
 test-file-management:
 	PYTHONPATH=. python tests/test_unified_file_management.py
+
+test-server-option:
+	PYTHONPATH=. python tests/test_server_option.py
 
 # Code quality
 lint:
@@ -99,9 +104,15 @@ run-example-verbose:
 	python -m src.main -t "Hello world!" --verbose
 
 run-web:
+	python -m src.main --server --reload
+
+run-web-direct:
 	python -m src.web_server --reload
 
 run-web-prod:
+	python -m src.main --server --host 0.0.0.0 --port 8000
+
+run-web-prod-direct:
 	python -m src.web_server --host 0.0.0.0 --port 8000
 
 # Documentation
