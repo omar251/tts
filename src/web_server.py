@@ -35,11 +35,11 @@ app = FastAPI(
 )
 
 # Ensure directories exist
-os.makedirs("output_audio", exist_ok=True)
+os.makedirs(settings.output_directory, exist_ok=True)
 os.makedirs("static", exist_ok=True)
 
 # Mount static files
-app.mount("/audio", StaticFiles(directory="output_audio"), name="audio")
+app.mount("/audio", StaticFiles(directory=settings.output_directory), name="audio")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Initialize TTS service
@@ -139,7 +139,7 @@ async def basic_synthesize(request: BasicTTSRequest):
         
         # Generate unique filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-        audio_file = os.path.join("output_audio", f"basic_tts_{timestamp}.wav")
+        audio_file = os.path.join(settings.output_directory, f"basic_tts_{timestamp}.wav")
         text_file = audio_file.replace(".wav", ".txt")
         
         # Use TTS service with CLI components
@@ -300,17 +300,13 @@ async def get_stats():
     try:
         stats = {
             "active_connections": len(manager.active_connections),
-            "output_directory": "output_audio",
-            "cli_output_directory": settings.output_directory,
+            "output_directory": settings.output_directory,
             "timestamp": datetime.now().isoformat()
         }
         
         # Count audio files
-        if os.path.exists("output_audio"):
-            stats["web_audio_files"] = len([f for f in os.listdir("output_audio") if f.endswith('.wav')])
-        
         if os.path.exists(settings.output_directory):
-            stats["cli_audio_files"] = len([f for f in os.listdir(settings.output_directory) if f.endswith('.wav')])
+            stats["web_audio_files"] = len([f for f in os.listdir(settings.output_directory) if f.endswith('.wav')])
         
         return stats
     

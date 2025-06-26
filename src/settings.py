@@ -5,8 +5,8 @@ class AppSettings:
     def __init__(self):
         # Default values - these can be overridden by config file or environment variables
         self.input_file = 'examples/input.txt'
-        self.translated_file = 'output_files/translated.txt'
-        self.output_directory = 'output_files'
+        self.translated_file = 'temp/translated.txt'
+        self.output_directory = 'temp'
         # Default for special_characters - make it a list
         self.special_characters = ['.', '?', '!', ';', ':', '\n']
         self.delimiter = '***WORD_BOUNDARY***'

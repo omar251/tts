@@ -46,7 +46,7 @@ tts/
 ├── examples/             # Sample files
 │   ├── input.txt         # Example input file
 │   └── translated.txt    # Example translated output
-├── output_files/         # Generated audio files
+├── temp/                 # Generated audio and text files
 ├── pyproject.toml        # Python project configuration
 └── README.md             # Documentation
 ```
@@ -90,8 +90,8 @@ If `--language` is not provided, the original text is used without translation.
 You can customize the tool's behavior by editing the `config.yaml` file in the project root:
 
 - `input_file`: Default input text file path (relative to project root)
-- `translated_file`: Path for the translated text file (relative to project root)
-- `output_directory`: Directory to store generated audio files
+- `translated_file`: Path for the translated text file (relative to project root). Defaults to `temp/translated.txt`.
+- `output_directory`: Directory to store generated audio files. Defaults to `temp`.
 - `special_characters`: Characters used to split the text into chunks
 - `delimiter`: Delimiter used in word boundary files
 - `tts_voice`: Default TTS voice (see `edge-tts --list-voices` for options)

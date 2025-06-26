@@ -15,7 +15,6 @@ help:
 	@echo "  clean        - Clean build artifacts"
 	@echo "  build        - Build package"
 	@echo "  run-example  - Run example with sample text"
-	@echo "  run-api      - Run basic TTS API server"
 	@echo "  run-web      - Run unified web server (CLI + Web)"
 	@echo "  run-web-prod - Run web server in production mode"
 	@echo "  security     - Run security checks"
@@ -92,12 +91,8 @@ run-example-file:
 run-example-translate:
 	python -m src.main -t "Bonjour le monde" --language en
 
-run-verbose:
+run-example-verbose:
 	python -m src.main -t "Hello world!" --verbose
-
-# API servers
-run-api:
-	uvicorn src.api_server:app --reload --host 0.0.0.0 --port 8000
 
 run-web:
 	python -m src.web_server --reload
@@ -113,9 +108,9 @@ docs:
 
 # Cleanup output files
 clean-output:
-	rm -rf output_files/*.wav
-	rm -rf output_files/*.txt
-	rm -rf output_files/*.mp3
+	rm -rf temp/*.wav
+	rm -rf temp/*.txt
+	rm -rf temp/*.mp3
 
 # Install pre-commit hooks
 install-hooks:

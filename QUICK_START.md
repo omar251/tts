@@ -55,42 +55,7 @@ Open: http://localhost:8000
 - ✅ **WebSocket**: Live updates and progress tracking
 - ✅ **Mobile friendly**: Works on phones and tablets
 
-## 📡 **3. API Server (Enhanced)**
-
-### Start API Server
-```bash
-# Basic API server
-make run-api
-
-# Manual start
-uvicorn src.api_server:app --reload --host 0.0.0.0 --port 8000
-```
-
-### API Usage
-```bash
-# Basic synthesis
-curl -X POST http://localhost:8000/synthesize \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Hello API!"}' \
-  --output speech.wav
-
-# With translation
-curl -X POST http://localhost:8000/synthesize \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Hola mundo", "language": "en"}' \
-  --output speech.wav
-
-# With specific voice
-curl -X POST http://localhost:8000/synthesize \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Hello", "voice": "en-US-AriaNeural"}' \
-  --output speech.wav
-
-# API documentation
-open http://localhost:8000/docs
-```
-
-## 🐳 **4. Docker Deployment**
+## 🐳 **3. Docker Deployment**
 
 ### Single Service
 ```bash
@@ -103,23 +68,12 @@ docker run -p 8000:8000 tts-unified
 # Access at http://localhost:8000
 ```
 
-### Multi-Service
-```bash
-# Start all services
-docker-compose up
-
-# Services:
-# - Web Interface: http://localhost:8000
-# - API Server: http://localhost:8001
-```
-
 ## 🔧 **Available Commands**
 
 ### Make Commands
 ```bash
 make help              # Show all commands
 make run-example       # Test CLI with example
-make run-api          # Start API server
 make run-web          # Start web server (dev)
 make run-web-prod     # Start web server (prod)
 make test             # Run tests
@@ -133,9 +87,6 @@ python -m src.main [options]
 
 # Web server
 python -m src.web_server [options]
-
-# API server
-uvicorn src.api_server:app [options]
 
 # Verification
 python verify_setup.py
@@ -157,18 +108,6 @@ make run-web
 open http://localhost:8000
 
 # Enter text and click "Stream Audio"
-```
-
-### Test API
-```bash
-# Start API
-make run-api
-
-# Test endpoint
-curl -X POST http://localhost:8000/synthesize \
-  -H "Content-Type: application/json" \
-  -d '{"text": "API test"}' \
-  --output test.wav
 ```
 
 ## 🌟 **Key Features**
@@ -236,8 +175,7 @@ python -m src.main -t "debug test" --verbose
 The unified TTS system is fully restored and operational. Choose your preferred interface:
 
 - **🖥️ CLI**: For automation and power users
-- **🌐 Web**: For interactive use and non-technical users  
-- **📡 API**: For integration with other applications
+- **🌐 Web**: For interactive use and non-technical users, and for API access.
 - **🐳 Docker**: For production deployment
 
 All interfaces provide the same high-quality streaming TTS experience! 🎵

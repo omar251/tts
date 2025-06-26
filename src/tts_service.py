@@ -37,7 +37,6 @@ class TTSService:
     def _setup_directories(self):
         """Ensure required directories exist."""
         os.makedirs(settings.output_directory, exist_ok=True)
-        os.makedirs("output_audio", exist_ok=True)  # Web output directory
     
     async def stream_tts_cli(self, text: str, output_file: str, target_language: Optional[str] = None) -> None:
         """
@@ -103,8 +102,8 @@ class TTSService:
                 
                 # Generate unique filenames
                 base_filename = f"web_output_{timestamp}_{i:06d}"
-                audio_file = os.path.join("output_audio", f"{base_filename}.wav")
-                text_file = os.path.join("output_audio", f"{base_filename}.txt")
+                audio_file = os.path.join(settings.output_directory, f"{base_filename}.wav")
+                text_file = os.path.join(settings.output_directory, f"{base_filename}.txt")
                 
                 # Use existing TTS generator with voice override if specified
                 if voice:
@@ -203,7 +202,7 @@ class TTSService:
         max_age_seconds = max_age_hours * 3600
         
         # Clean up web output directory
-        web_output_dir = "output_audio"
+        web_output_dir = settings.output_directory
         if os.path.exists(web_output_dir):
             for filename in os.listdir(web_output_dir):
                 file_path = os.path.join(web_output_dir, filename)
