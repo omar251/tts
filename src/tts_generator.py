@@ -15,7 +15,11 @@ from .logging_utils import VERBOSE, vprint
 from .settings import settings
 
 class TTSGenerator:
-    _voices_cache_file = "voices_cache.json"  # File to store voices
+    def __init__(self):
+        # Import here to avoid circular imports
+        from .file_manager import UnifiedFileManager
+        self._file_manager = UnifiedFileManager(settings.output_directory)
+        self._voices_cache_file = self._file_manager.create_cache_file_path("voices", ".json")
 
     async def generate_tts(self, text: str, audio_file: str, text_file: str) -> Tuple[Optional[str], Optional[str]]:
         vprint(f"[TTSGenerator] Starting TTS generation for audio file: {audio_file}")

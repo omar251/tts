@@ -9,27 +9,17 @@ aiosignal==1.3.2
 annotated-types==0.7.0
     # via pydantic
 anyio==4.9.0
-    # via
-    #   starlette
-    #   watchfiles
+    # via starlette
 attrs==25.3.0
     # via aiohttp
-beautifulsoup4==4.13.4
-    # via deep-translator
 certifi==2025.4.26
     # via
     #   edge-tts
-    #   requests
-charset-normalizer==3.4.2
-    # via requests
+    #   httpx
+chardet==3.0.4
+    # via httpx
 click==8.1.8
     # via uvicorn
-colorama==0.4.6
-    # via
-    #   click
-    #   uvicorn
-deep-translator==1.11.4
-    # via tts (pyproject.toml)
 edge-tts==7.0.2
     # via tts (pyproject.toml)
 fastapi==0.115.12
@@ -38,14 +28,28 @@ frozenlist==1.6.0
     # via
     #   aiohttp
     #   aiosignal
-h11==0.16.0
-    # via uvicorn
-httptools==0.6.4
-    # via uvicorn
-idna==3.10
+googletrans==4.0.0rc1
+    # via tts (pyproject.toml)
+h11==0.9.0
+    # via
+    #   httpcore
+    #   uvicorn
+h2==3.2.0
+    # via httpcore
+hpack==3.0.0
+    # via h2
+hstspreload==2025.1.1
+    # via httpx
+httpcore==0.9.1
+    # via httpx
+httpx==0.13.3
+    # via googletrans
+hyperframe==5.2.0
+    # via h2
+idna==2.10
     # via
     #   anyio
-    #   requests
+    #   httpx
     #   yarl
 multidict==6.4.3
     # via
@@ -56,19 +60,24 @@ propcache==0.3.1
     #   aiohttp
     #   yarl
 pydantic==2.11.4
-    # via fastapi
+    # via
+    #   tts (pyproject.toml)
+    #   fastapi
 pydantic-core==2.33.2
     # via pydantic
-python-dotenv==1.1.0
-    # via uvicorn
+pygame==2.6.1
+    # via tts (pyproject.toml)
+pypdf2==3.0.1
+    # via tts (pyproject.toml)
 pyyaml==6.0.2
-    # via uvicorn
-requests==2.32.3
-    # via deep-translator
+    # via tts (pyproject.toml)
+rfc3986==1.5.0
+    # via httpx
 sniffio==1.3.1
-    # via anyio
-soupsieve==2.7
-    # via beautifulsoup4
+    # via
+    #   anyio
+    #   httpcore
+    #   httpx
 srt==3.5.3
     # via edge-tts
 starlette==0.46.2
@@ -78,7 +87,6 @@ tabulate==0.9.0
 typing-extensions==4.13.2
     # via
     #   anyio
-    #   beautifulsoup4
     #   edge-tts
     #   fastapi
     #   pydantic
@@ -86,15 +94,7 @@ typing-extensions==4.13.2
     #   typing-inspection
 typing-inspection==0.4.0
     # via pydantic
-urllib3==2.4.0
-    # via requests
 uvicorn==0.34.2
     # via tts (pyproject.toml)
-watchfiles==1.0.5
-    # via uvicorn
-websockets==15.0.1
-    # via
-    #   tts (pyproject.toml)
-    #   uvicorn
 yarl==1.20.0
     # via aiohttp

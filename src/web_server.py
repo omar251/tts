@@ -137,10 +137,8 @@ async def basic_synthesize(request: BasicTTSRequest):
     try:
         logger.info(f"Basic TTS request: {request.text[:50]}...")
         
-        # Generate unique filename
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-        audio_file = os.path.join(settings.output_directory, f"basic_tts_{timestamp}.wav")
-        text_file = audio_file.replace(".wav", ".txt")
+        # Use unified file manager for consistent file paths
+        audio_file, text_file = tts_service.unified_file_manager.create_audio_file_path("basic_tts")
         
         # Use TTS service with CLI components
         if request.voice:
@@ -298,15 +296,17 @@ async def cleanup_old_files(max_age_hours: int = 24):
 async def get_stats():
     """Get service statistics."""
     try:
+        # Get session info from unified file manager
+        session_info = tts_service.unified_file_manager.get_session_info()
+        disk_usage = tts_service.unified_file_manager.get_disk_usage()
+        
         stats = {
             "active_connections": len(manager.active_connections),
             "output_directory": settings.output_directory,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
+            "session_info": session_info,
+            "disk_usage": disk_usage
         }
-        
-        # Count audio files
-        if os.path.exists(settings.output_directory):
-            stats["web_audio_files"] = len([f for f in os.listdir(settings.output_directory) if f.endswith('.wav')])
         
         return stats
     

@@ -7,7 +7,7 @@ services:
       - "8000:8000"
     environment:
       - TTS_OUTPUT_DIRECTORY=/app/temp
-      - TTS_INPUT_FILE=/app/examples/input.txt
+      - TTS_INPUT_FILE=/app/examples/data/input.txt
       - TTS_TRANSLATED_FILE=/app/temp/translated.txt
     volumes:
       - ./temp:/app/temp

@@ -17,6 +17,7 @@ help:
 	@echo "  run-example  - Run example with sample text"
 	@echo "  run-web      - Run unified web server (CLI + Web)"
 	@echo "  run-web-prod - Run web server in production mode"
+	@echo "  test-file-management - Test unified file management system"
 	@echo "  security     - Run security checks"
 	@echo "  docs         - Generate documentation"
 
@@ -29,7 +30,7 @@ install-dev:
 
 # Testing
 test:
-	pytest tests/ -v
+	PYTHONPATH=. pytest tests/ -v
 
 test-cov:
 	pytest tests/ -v --cov=src --cov-report=term-missing --cov-report=html
@@ -39,6 +40,9 @@ test-integration:
 
 test-unit:
 	pytest tests/test_basic_functionality.py -v -m unit
+
+test-file-management:
+	PYTHONPATH=. python tests/test_unified_file_management.py
 
 # Code quality
 lint:
@@ -86,7 +90,7 @@ run-example:
 	python -m src.main -t "Hello world! This is a test of the text-to-speech system."
 
 run-example-file:
-	python -m src.main -f examples/input.txt
+	python -m src.main -f examples/data/input.txt
 
 run-example-translate:
 	python -m src.main -t "Bonjour le monde" --language en
@@ -108,6 +112,7 @@ docs:
 
 # Cleanup output files
 clean-output:
+	rm -rf temp/session_*
 	rm -rf temp/*.wav
 	rm -rf temp/*.txt
 	rm -rf temp/*.mp3

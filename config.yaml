@@ -1,12 +1,16 @@
 # Text-to-Speech CLI Tool Configuration
 
 # Default input text file path (relative to project root)
-input_file: examples/input.txt
+input_file: examples/data/input.txt
 
 # Path for the translated text file (relative to project root)
+# Note: With unified file management, translation files are now automatically
+# organized in session-based directories under temp/session_*/translation/
 translated_file: temp/translated.txt
 
 # Directory to store generated audio files (relative to project root)
+# Note: With unified file management, all artifacts are organized in
+# session-based subdirectories: temp/session_*/audio/, temp/session_*/text/, etc.
 output_directory: temp
 
 # Characters used to split the text into chunks

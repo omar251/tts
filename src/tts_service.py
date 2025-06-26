@@ -16,6 +16,7 @@ from typing import Optional, List, Tuple, AsyncGenerator
 import logging
 
 from .main import TTSApplication
+from .file_manager import UnifiedFileManager
 from .settings import settings
 
 logger = logging.getLogger(__name__)
@@ -32,6 +33,7 @@ class TTSService:
     def __init__(self):
         """Initialize the TTS service with CLI components."""
         self.tts_app = TTSApplication()
+        self.unified_file_manager = UnifiedFileManager(settings.output_directory)
         self._setup_directories()
     
     def _setup_directories(self):
@@ -95,15 +97,11 @@ class TTSService:
             logger.info(f"Split text into {len(paragraphs)} paragraphs")
             
             # Step 3: Process each paragraph using CLI TTS logic
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-            
             for i, paragraph in enumerate(paragraphs):
                 logger.info(f"Processing paragraph {i+1}/{len(paragraphs)}")
                 
-                # Generate unique filenames
-                base_filename = f"web_output_{timestamp}_{i:06d}"
-                audio_file = os.path.join(settings.output_directory, f"{base_filename}.wav")
-                text_file = os.path.join(settings.output_directory, f"{base_filename}.txt")
+                # Use unified file manager for consistent file paths
+                audio_file, text_file = self.unified_file_manager.create_audio_file_path("web_output", i)
                 
                 # Use existing TTS generator with voice override if specified
                 if voice:
@@ -118,8 +116,8 @@ class TTSService:
                     )
                     
                     if result_audio and os.path.exists(result_audio):
-                        # Generate web-accessible URL
-                        audio_url = f"/audio/{os.path.basename(result_audio)}"
+                        # Generate web-accessible URL using unified file manager
+                        audio_url = self.unified_file_manager.get_web_audio_url(result_audio)
                         
                         logger.info(f"Generated audio for paragraph {i+1}: {audio_url}")
                         yield result_audio, audio_url, paragraph
@@ -197,31 +195,10 @@ class TTSService:
         Returns:
             Number of files cleaned up
         """
-        cleanup_count = 0
-        current_time = time.time()
-        max_age_seconds = max_age_hours * 3600
+        # Use unified file manager for cleanup
+        cleanup_count = self.unified_file_manager.cleanup_old_sessions(max_age_hours)
         
-        # Clean up web output directory
-        web_output_dir = settings.output_directory
-        if os.path.exists(web_output_dir):
-            for filename in os.listdir(web_output_dir):
-                file_path = os.path.join(web_output_dir, filename)
-                if os.path.isfile(file_path):
-                    file_age = current_time - os.path.getmtime(file_path)
-                    if file_age > max_age_seconds:
-                        try:
-                            os.remove(file_path)
-                            cleanup_count += 1
-                        except OSError:
-                            pass
-        
-        # Use existing CLI cleanup for main output directory
-        try:
-            self.tts_app.file_manager.cleanup_temp_files("old_files")
-        except:
-            pass
-        
-        logger.info(f"Cleaned up {cleanup_count} old audio files")
+        logger.info(f"Cleaned up {cleanup_count} old sessions")
         return cleanup_count
     
     async def health_check(self) -> dict:

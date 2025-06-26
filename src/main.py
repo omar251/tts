@@ -10,7 +10,7 @@ from .translator import Translator
 from .tts_generator import TTSGenerator
 from .audio_player import AudioPlayer
 from .text_processor import TextProcessor
-from .file_manager import FileManager
+from .file_manager import UnifiedFileManager
 from .settings import settings
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -26,7 +26,7 @@ class TTSApplication:
         self.tts_generator = TTSGenerator()
         self.audio_player = AudioPlayer()
         self.text_processor = TextProcessor()
-        self.file_manager = FileManager()
+        self.file_manager = UnifiedFileManager(settings.output_directory)
         vprint("[TTSApplication] Initialization complete.")
 
     async def process_chunk(self, chunk: str, output_file: str, chunk_text_file: str, play_queue: asyncio.Queue) -> None:
@@ -71,8 +71,8 @@ class TTSApplication:
             logger.error(f"An error occurred during TTS and playback: {e}")
 
     async def run(self, input_text: str | None = None, is_file: bool = False, target_language: str | None = None):
-        vprint("[TTSApplication] Creating output directory if needed...")
-        self.file_manager.create_output_directory(settings.output_directory)
+        vprint("[TTSApplication] Unified file manager ready...")
+        # The unified file manager automatically sets up directories
 
         # Step 1: Input Handling and Translation
         if input_text is None:
@@ -101,27 +101,37 @@ class TTSApplication:
 
         # Step 2b: Reconstruct translated file from chunks
         reconstructed_translated_text = "".join(chunks)
-        vprint(f"[TTSApplication] Writing translated text to file: {settings.translated_file}")
-        with open(settings.translated_file, "w", encoding="utf-8") as f:
+        
+        # Use unified file manager for translation file
+        if target_language:
+            translation_file = self.file_manager.create_translation_file_path("auto", target_language)
+        else:
+            translation_file = self.file_manager.create_translation_file_path("auto", "auto")
+        
+        vprint(f"[TTSApplication] Writing translated text to file: {translation_file}")
+        with open(translation_file, "w", encoding="utf-8") as f:
             f.write(reconstructed_translated_text)
 
         output_file = None
         try:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-            output_file = os.path.join(settings.output_directory, f"output_{timestamp}")
+            # Use unified file manager for audio output
+            base_audio_file, _ = self.file_manager.create_audio_file_path("cli_output")
+            output_file = base_audio_file.replace(".wav", "")  # Remove extension for base name
             vprint(f"[TTSApplication] Starting TTS and playback. Output base: {output_file}")
             await self.talk(reconstructed_translated_text, output_file)
         except FileNotFoundError:
             logger.error("Input file not found.")
-            empty_output_file = os.path.join(settings.output_directory, "empty")
+            empty_audio_file, _ = self.file_manager.create_audio_file_path("empty")
+            empty_output_file = empty_audio_file.replace(".wav", "")
             await self.talk("I have no idea what to say", empty_output_file)
             output_file = empty_output_file
         except Exception as e:
             logger.error(f"An unexpected error occurred: {e}")
         finally:
             if output_file is not None:
-                vprint(f"[TTSApplication] Cleaning up temporary files for: {output_file}")
-                self.file_manager.cleanup_temp_files(output_file)
+                vprint(f"[TTSApplication] Cleaning up session files...")
+                cleanup_count = self.file_manager.cleanup_session_files()
+                vprint(f"[TTSApplication] Cleaned up {cleanup_count} files.")
 
 def main():
     parser = argparse.ArgumentParser(description="Text-to-Speech CLI tool")
