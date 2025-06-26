@@ -20,6 +20,7 @@ dependencies = [
     "uvicorn>=0.24.0",
     "pydantic>=2.5.0",
     "PyPDF2>=3.0.1",
+    "python-multipart>=0.0.20",
 ]
 
 [project.optional-dependencies]

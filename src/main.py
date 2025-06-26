@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 from .logging_utils import vprint
 from . import logging_utils
-from . import web_server
 
 class TTSApplication:
     def __init__(self):
@@ -194,6 +193,7 @@ Examples:
         server_args.extend(remaining_args)
         
         sys.argv = server_args
+        from . import web_server
         web_server.main()
     else:
         vprint("[Main] Initializing TTSApplication...")

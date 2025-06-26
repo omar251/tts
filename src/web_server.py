@@ -11,14 +11,17 @@ import asyncio
 import json
 import os
 import logging
+import tempfile
 from datetime import datetime
 from typing import Optional, Dict, Any
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, UploadFile, File
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, field_validator
 import uvicorn
+from PyPDF2 import PdfReader
+import re
 
 from .tts_service import TTSService
 from .settings import settings
@@ -242,7 +245,7 @@ async def stream_tts_endpoint(request: StreamTTSRequest):
     results via WebSocket for real-time web interface updates.
     """
     try:
-        logger.info(f"Stream TTS request from client #{request.client_id}: {request.text[:50]}...")
+        logger.info(f"Stream TTS request from client #{request.client_id}: text={request.text[:50]}..., voice={request.voice}, language={request.language}, target_language={request.target_language}")
         
         # Send start notification
         await manager.send_json({
@@ -255,7 +258,7 @@ async def stream_tts_endpoint(request: StreamTTSRequest):
         failed_count = 0
         
         async for audio_file, audio_url, paragraph_text in tts_service.stream_tts_web(
-            request.text, request.voice, request.language, request.target_language
+            request.text, request.voice, request.language, request.target_language, request.client_id
         ):
             try:
                 # Send audio URL and text to client
@@ -305,6 +308,71 @@ async def stream_tts_endpoint(request: StreamTTSRequest):
             pass
         
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/tts/stop/{client_id}")
+async def stop_tts_streaming(client_id: int):
+    """
+    Stop TTS streaming for a specific client.
+    """
+    try:
+        logger.info(f"Stop request received for client #{client_id}")
+        
+        # Stop the streaming process
+        stopped = tts_service.stop_streaming(client_id)
+        
+        if stopped:
+            # Send stop notification via WebSocket
+            await manager.send_json({
+                "type": "stopped",
+                "message": "TTS streaming stopped by user request"
+            }, client_id)
+            
+            logger.info(f"TTS streaming stopped for client #{client_id}")
+            return {"status": "stopped", "client_id": client_id}
+        else:
+            return {"status": "not_streaming", "client_id": client_id, "message": "Client was not streaming"}
+    
+    except Exception as e:
+        logger.error(f"Error stopping TTS for client #{client_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/convert_pdf_to_text")
+async def convert_pdf_to_text(file: UploadFile = File(...)):
+    """
+    Converts an uploaded PDF file to plain text.
+    """
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported.")
+
+    try:
+        # Read the PDF content
+        pdf_content = await file.read()
+        
+        # Use a temporary file to save the PDF content for PyPDF2
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
+            temp_pdf.write(pdf_content)
+            temp_pdf_path = temp_pdf.name
+
+        text_chunks = []
+        try:
+            reader = PdfReader(temp_pdf_path)
+            for page_num, page in enumerate(reader.pages, start=1):
+                text = page.extract_text() or ""
+                # Remove links, page numbers, and references using regex
+                text = re.sub(r'http\S+|www\.\S+', '', text)  # Remove URLs
+                text = re.sub(r'\bPage \d+\b', '', text)  # Remove page numbers
+                text = re.sub(r'\bReferences?\b', '', text)  # Remove references
+                text_chunks.append(text)
+            raw_text = "\n".join(text_chunks)
+            # Collapse any run of whitespace (spaces, tabs, newlines) to a single space
+            cleaned_text = re.sub(r"\s+", " ", raw_text).strip()
+            return {"text": cleaned_text}
+        finally:
+            os.unlink(temp_pdf_path) # Clean up the temporary PDF file
+
+    except Exception as e:
+        logger.error(f"Error converting PDF: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to convert PDF: {str(e)}")
 
 # --- Utility Endpoints ---
 @app.post("/api/cleanup")

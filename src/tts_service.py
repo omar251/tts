@@ -35,6 +35,8 @@ class TTSService:
         self.tts_app = TTSApplication()
         self.unified_file_manager = UnifiedFileManager(settings.output_directory)
         self._setup_directories()
+        # Stop mechanism for streaming operations
+        self._stop_flags = {}  # client_id -> stop_flag
     
     def _setup_directories(self):
         """Ensure required directories exist."""
@@ -66,7 +68,8 @@ class TTSService:
         logger.info("CLI TTS streaming completed")
     
     async def stream_tts_web(self, text: str, voice: Optional[str] = None, 
-                           language: Optional[str] = None, target_language: Optional[str] = None) -> AsyncGenerator[Tuple[str, str, str], None]:
+                           language: Optional[str] = None, target_language: Optional[str] = None, 
+                           client_id: Optional[int] = None) -> AsyncGenerator[Tuple[str, str, str], None]:
         """
         Stream TTS for web interface using CLI components.
         
@@ -77,11 +80,16 @@ class TTSService:
             text: Text to convert to speech
             voice: Optional specific voice to use
             target_language: Optional target language for translation
+            client_id: Optional client ID for stop mechanism
             
         Yields:
             Tuple of (audio_file_path, audio_url, paragraph_text)
         """
         logger.info(f"Starting web TTS streaming for text: {text[:50]}...")
+        
+        # Initialize stop flag for this client
+        if client_id is not None:
+            self._stop_flags[client_id] = False
         
         try:
             # Step 1: Translation (if requested)
@@ -90,14 +98,27 @@ class TTSService:
                 processed_text = self.tts_app.translator.translate_text(text, target_language=target_language)
             else:
                 processed_text = text
+
+            # Ensure processed_text is not empty after translation/processing
+            if not processed_text.strip():
+                logger.warning("Processed text is empty, skipping audio generation.")
+                return # Exit the generator if no text to process
             
             # Step 2: Use CLI text processing for chunking
-            # Split by paragraphs (similar to webtts) but use CLI logic for consistency
             paragraphs = self._split_into_paragraphs(processed_text)
             logger.info(f"Split text into {len(paragraphs)} paragraphs")
             
             # Step 3: Process each paragraph using CLI TTS logic
             for i, paragraph in enumerate(paragraphs):
+                # Check stop flag before processing each paragraph
+                if client_id is not None and self._stop_flags.get(client_id, False):
+                    logger.info(f"Stop requested for client {client_id}, stopping TTS generation")
+                    break
+                    
+                if not paragraph.strip(): # Skip empty paragraphs
+                    logger.warning(f"Skipping empty paragraph {i+1}")
+                    continue
+
                 logger.info(f"Processing paragraph {i+1}/{len(paragraphs)}")
                 
                 # Use unified file manager for consistent file paths
@@ -120,9 +141,9 @@ class TTSService:
                         audio_url = self.unified_file_manager.get_web_audio_url(result_audio)
                         
                         logger.info(f"Generated audio for paragraph {i+1}: {audio_url}")
-                        yield result_audio, audio_url, paragraph
+                        yield result_audio, audio_url, paragraph # Ensure paragraph is not None
                     else:
-                        logger.error(f"Failed to generate audio for paragraph {i+1}")
+                        logger.error(f"Failed to generate audio for paragraph {i+1} or audio file not found.")
                         
                 finally:
                     # Restore original voice setting
@@ -132,6 +153,10 @@ class TTSService:
         except Exception as e:
             logger.error(f"Error in web TTS streaming: {e}")
             raise
+        finally:
+            # Clean up stop flag
+            if client_id is not None:
+                self._stop_flags.pop(client_id, None)
     
     def _split_into_paragraphs(self, text: str) -> List[str]:
         """
@@ -155,6 +180,36 @@ class TTSService:
             paragraphs = self.tts_app.text_processor.split_text_into_chunks(text)
         
         return paragraphs
+    
+    def stop_streaming(self, client_id: int) -> bool:
+        """
+        Stop streaming for a specific client.
+        
+        Args:
+            client_id: Client ID to stop streaming for
+            
+        Returns:
+            True if stop flag was set, False if client was not found
+        """
+        if client_id in self._stop_flags:
+            self._stop_flags[client_id] = True
+            logger.info(f"Stop flag set for client {client_id}")
+            return True
+        else:
+            logger.warning(f"Client {client_id} not found in active streams")
+            return False
+    
+    def is_streaming(self, client_id: int) -> bool:
+        """
+        Check if a client is currently streaming.
+        
+        Args:
+            client_id: Client ID to check
+            
+        Returns:
+            True if client is streaming, False otherwise
+        """
+        return client_id in self._stop_flags
     
     async def get_available_voices(self) -> List[dict]:
         """
@@ -264,8 +319,8 @@ async def quick_cli_tts(text: str, output_file: str, target_language: Optional[s
     await service.stream_tts_cli(text, output_file, target_language)
 
 async def quick_web_tts(text: str, voice: Optional[str] = None, 
-                       target_language: Optional[str] = None) -> AsyncGenerator[Tuple[str, str, str], None]:
+                       target_language: Optional[str] = None, client_id: Optional[int] = None) -> AsyncGenerator[Tuple[str, str, str], None]:
     """Quick function for web TTS using the service layer."""
     service = TTSService()
-    async for result in service.stream_tts_web(text, voice, target_language):
+    async for result in service.stream_tts_web(text, voice, target_language, client_id):
         yield result

@@ -197,8 +197,16 @@
         <div id="message-box" class="message info hidden"></div>
 
         <div>
-            <label for="text" class="block text-sm font-medium text-gray-700 mb-1">Enter Text:</label>
+            <label for="text" class="block text-sm font-medium text-gray-700 mb-1">Enter Text or Load from File:</label>
             <textarea id="text" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm" rows="6" placeholder="Enter text here, paragraphs separated by double line breaks..."></textarea>
+            <div class="mt-4 flex items-center space-x-2">
+                <input type="file" id="file-input" accept=".txt,.md,.html,.pdf" class="hidden">
+                <button id="load-file-button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 action-button">
+                    <i data-lucide="folder-open" class="w-5 h-5"></i>
+                    <span>Browse for File</span>
+                </button>
+                <span id="file-name" class="text-sm text-gray-600 truncate">No file selected</span>
+            </div>
         </div>
 
         <div>
@@ -269,6 +277,9 @@
         const speedControl = document.getElementById('speed-control');
         const restartButton = document.getElementById('restart-button');
         const nextButton = document.getElementById('next-button');
+        const fileInput = document.getElementById('file-input');
+        const loadFileButton = document.getElementById('load-file-button');
+        const fileNameSpan = document.getElementById('file-name');
 
         // --- State Variables ---
         const clientId = Math.floor(Math.random() * 1000000);
@@ -277,6 +288,7 @@
         let isPlaying = false;
         let isStreamProcessing = false;
         let isAudioSetup = false;
+        let isStopping = false;
 
         // --- Constants ---
         const WS_RECONNECT_DELAY = 5000;
@@ -438,6 +450,12 @@
                          isStreamProcessing = false;
                          setStreamButtonLoading(false); // Re-enable button on error
                          resetAudioPlayerUI();
+                     } else if (data.type === 'stopped') {
+                         console.log("Server stopped message received:", data.message);
+                         showMessage('info', data.message || 'TTS generation stopped');
+                         isStreamProcessing = false;
+                         setStreamButtonLoading(false); // Re-enable button
+                         // Don't reset audio player UI here - let user continue with existing audio
                      } else if (data.message) {
                          console.log("Server message:", data.message);
                     }
@@ -546,6 +564,8 @@
              singleAudioPlayer.load();
              isPlaying = false;
              isAudioSetup = false;
+             isStopping = false;
+             audioQueue = [];
              hideParagraph();
              setControlsDisabled(true);
              updateNextButtonState();
@@ -576,6 +596,9 @@
              hideMessage();
              setStreamButtonLoading(true); // Set loading state
              showMessage('info', 'Initiating stream request...');
+             
+             // Enable stop button during streaming
+             stopButton.disabled = false;
 
              const selectedVoice = voiceSelect.value || null;
              const targetLanguage = targetLanguageSelect.value || null;
@@ -638,16 +661,62 @@
              }
          });
 
-         stopButton.addEventListener('click', () => {
-             if (!singleAudioPlayer.src || !isAudioSetup) return;
+         stopButton.addEventListener('click', async () => {
              console.log("Stop button clicked");
+             
+             if (isStopping) {
+                 console.log("Stop already in progress");
+                 return;
+             }
+             
+             isStopping = true;
+             
+             // Stop current audio playback immediately
              singleAudioPlayer.pause();
              singleAudioPlayer.currentTime = 0;
              isPlaying = false;
              updatePlayPauseIcon(true);
+             
+             // Clear the audio queue to prevent further playback
+             audioQueue = [];
+             updateNextButtonState();
+             hideParagraph();
+             
+             // If streaming is in progress, send stop request to server
+             if (isStreamProcessing) {
+                 try {
+                     showMessage('info', 'Stopping TTS generation...');
+                     
+                     const response = await fetch(`/api/tts/stop/${clientId}`, {
+                         method: 'POST',
+                         headers: {
+                             'Content-Type': 'application/json'
+                         }
+                     });
+                     
+                     const result = await response.json();
+                     console.log("Stop TTS response:", result);
+                     
+                     if (response.ok) {
+                         showMessage('success', 'TTS generation stopped successfully');
+                         isStreamProcessing = false;
+                         setStreamButtonLoading(false);
+                     } else {
+                         console.warn("Stop request returned non-OK status:", result);
+                         showMessage('warning', result.message || 'Stop request completed with warnings');
+                     }
+                 } catch (error) {
+                     console.error("Error stopping TTS:", error);
+                     showMessage('warning', 'TTS generation may still be running on server');
+                 }
+             } else {
+                 showMessage('info', 'Playback stopped');
+             }
+             
+             // Reset UI state
              restartButton.disabled = true;
-             // Optional: Clear queue
-             // audioQueue = []; updateNextButtonState(); hideParagraph(); showMessage('info', 'Playback stopped.');
+             stopButton.disabled = true;
+             isStopping = false;
          });
 
          nextButton.addEventListener('click', () => {
@@ -670,6 +739,65 @@
          speedControl.addEventListener('change', () => {
              if (singleAudioPlayer.src && isAudioSetup) {
                 singleAudioPlayer.playbackRate = parseFloat(speedControl.value);
+             }
+         });
+
+         // --- File Input Logic ---
+         loadFileButton.addEventListener('click', () => {
+             fileInput.click(); // Trigger the hidden file input click
+         });
+
+         fileInput.addEventListener('change', async (event) => {
+             const file = event.target.files[0];
+             if (!file) {
+                 fileNameSpan.textContent = 'No file selected';
+                 textInput.value = '';
+                 return;
+             }
+
+             fileNameSpan.textContent = file.name;
+             hideMessage();
+             showMessage('info', `Loading file: ${file.name}...`);
+
+             try {
+                 if (file.type === 'application/pdf') {
+                     // Handle PDF conversion on the server
+                     const formData = new FormData();
+                     formData.append('file', file);
+
+                     const response = await fetch('/api/convert_pdf_to_text', {
+                         method: 'POST',
+                         body: formData,
+                     });
+
+                     if (!response.ok) {
+                         const errorData = await response.json();
+                         throw new Error(errorData.detail || 'Failed to convert PDF.');
+                     }
+
+                     const data = await response.json();
+                     textInput.value = data.text;
+                     showMessage('success', `Successfully converted and loaded PDF: ${file.name}`);
+
+                 } else if (file.type.startsWith('text/') || file.type === 'application/json' || file.name.endsWith('.md')) {
+                     // Handle text-based files
+                     const reader = new FileReader();
+                     reader.onload = (e) => {
+                         textInput.value = e.target.result;
+                         showMessage('success', `Successfully loaded file: ${file.name}`);
+                     };
+                     reader.onerror = () => {
+                         showMessage('error', `Failed to read file: ${file.name}`);
+                     };
+                     reader.readAsText(file);
+                 } else {
+                     showMessage('warning', 'Unsupported file type. Please select a text, markdown, HTML, or PDF file.');
+                     textInput.value = '';
+                 }
+             } catch (error) {
+                 console.error('Error loading file:', error);
+                 showMessage('error', `Error loading file: ${error.message}`);
+                 textInput.value = '';
              }
          });
 

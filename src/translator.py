@@ -48,7 +48,16 @@ class Translator:
         translated_chunks = []
         for idx, chunk in enumerate([c for c in chunks if c.strip()]):
             vprint(f"[Translator] Translating chunk {idx+1}/{len(chunks)}...")
-            translated_chunks.append(self.translator.translate(chunk, src='auto', dest=target_language).text)
+            try:
+                translated_chunk = self.translator.translate(chunk, src='auto', dest=target_language).text
+                if translated_chunk is not None:
+                    translated_chunks.append(translated_chunk)
+                else:
+                    vprint(f"[Translator] Warning: Translation for chunk {idx+1} returned None. Appending empty string.")
+                    translated_chunks.append("")
+            except Exception as e:
+                vprint(f"[Translator] Error translating chunk {idx+1}: {e}. Appending original chunk.")
+                translated_chunks.append(chunk) # Fallback to original chunk on error
         vprint("[Translator] All chunks translated.")
         return "".join(translated_chunks)
 
