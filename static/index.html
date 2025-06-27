@@ -13,15 +13,17 @@
         /* Custom base styles */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc; /* Lighter gray background */
+            background-color: #0f172a; /* Dark slate background */
+            color: #e2e8f0; /* Light gray text */
         }
 
         /* Custom styles for a cleaner look */
         .container {
-            background-color: #ffffff;
+            background-color: #1e293b; /* Dark slate container */
             padding: 2rem 2.5rem; /* Increased padding */
             border-radius: 1rem; /* Larger border radius */
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Softer shadow */
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2); /* Darker shadow */
+            border: 1px solid #334155; /* Subtle border */
             max-width: 800px;
             width: 100%;
             margin: 2rem auto; /* Center container with margin */
@@ -33,7 +35,7 @@
             color: white;
             padding: 2px 4px;
             border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.5);
             transition: all 0.2s ease-in-out;
             font-weight: 600;
         }
@@ -48,30 +50,63 @@
             100% { transform: scale(1); }
         }
 
-        /* Text display area for word highlighting */
-        #current-paragraph {
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
+        /* Text display area for full text with highlighting */
+        #full-text-display {
+            background-color: #0f172a; /* Dark background */
+            border: 1px solid #475569; /* Lighter border for contrast */
             border-radius: 0.5rem;
             padding: 1rem;
             margin-top: 1rem;
             font-size: 1.1rem;
             line-height: 1.6;
             font-family: 'Inter', sans-serif;
-            color: #374151;
-            max-height: 200px;
+            color: #e2e8f0; /* Light text */
+            max-height: 400px;
             overflow-y: auto;
+            min-height: 100px; /* Ensure minimum height */
+        }
+        
+
+        /* Paragraph styling within full text display */
+        .text-paragraph {
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .text-paragraph.played {
+            background-color: #1e3a8a; /* Dark blue background */
+            color: #93c5fd; /* Light blue text */
+            opacity: 0.6;
+        }
+
+        .text-paragraph.current {
+            background-color: #1e40af; /* Blue background */
+            border: 2px solid #3b82f6;
+            color: #dbeafe; /* Very light blue text */
+            font-weight: 500;
+        }
+
+        .text-paragraph.upcoming {
+            background-color: transparent;
+            color: #94a3b8; /* Light gray text */
         }
 
         textarea, select {
             border-radius: 0.5rem; /* Consistent rounded corners */
-            border-color: #d1d5db; /* Tailwind gray-300 */
+            border-color: #475569; /* Dark gray border */
+            background-color: #334155; /* Dark background */
+            color: #e2e8f0; /* Light text */
             transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
         }
         textarea:focus, select:focus {
-            border-color: #3b82f6; /* Tailwind blue-500 */
+            border-color: #3b82f6; /* Blue focus border */
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); /* Focus ring */
             outline: none;
+        }
+        textarea::placeholder {
+            color: #94a3b8; /* Light gray placeholder */
         }
 
         /* Custom button styles */
@@ -102,24 +137,24 @@
             gap: 0.5rem;
         }
         .message.info {
-            background-color: #eff6ff; /* Tailwind blue-50 */
-            color: #1e40af; /* Tailwind blue-800 */
-            border-color: #bfdbfe; /* Tailwind blue-200 */
+            background-color: #1e3a8a; /* Dark blue background */
+            color: #93c5fd; /* Light blue text */
+            border-color: #3b82f6; /* Blue border */
         }
         .message.success {
-            background-color: #f0fdf4; /* Tailwind green-50 */
-            color: #15803d; /* Tailwind green-700 */
-            border-color: #bbf7d0; /* Tailwind green-200 */
+            background-color: #14532d; /* Dark green background */
+            color: #86efac; /* Light green text */
+            border-color: #22c55e; /* Green border */
         }
         .message.warning {
-             background-color: #fffbeb; /* Tailwind yellow-50 */
-             color: #b45309; /* Tailwind yellow-700 */
-             border-color: #fde68a; /* Tailwind yellow-200 */
+             background-color: #92400e; /* Dark yellow background */
+             color: #fde047; /* Light yellow text */
+             border-color: #eab308; /* Yellow border */
         }
         .message.error {
-            background-color: #fef2f2; /* Tailwind red-50 */
-            color: #b91c1c; /* Tailwind red-700 */
-            border-color: #fecaca; /* Tailwind red-200 */
+            background-color: #991b1b; /* Dark red background */
+            color: #fca5a5; /* Light red text */
+            border-color: #ef4444; /* Red border */
         }
         .message i { /* Style for icons in messages */
              width: 1.1rem;
@@ -130,9 +165,9 @@
         #audio-container {
             margin-top: 1.5rem;
             padding: 1.5rem;
-            background-color: #f9fafb; /* Slightly off-white background */
+            background-color: #334155; /* Dark gray background */
             border-radius: 0.75rem;
-            border: 1px solid #e5e7eb; /* Subtle border */
+            border: 1px solid #475569; /* Subtle border */
         }
         /* Hide the default audio player visually, but keep it functional */
         #single-audio-player {
@@ -160,8 +195,8 @@
             gap: 0.75rem; /* Gap within control groups */
         }
         #custom-controls button {
-            background-color: #e5e7eb; /* Light gray */
-            color: #374151; /* Darker gray text */
+            background-color: #475569; /* Dark gray */
+            color: #e2e8f0; /* Light text */
             padding: 0.5rem;
             border-radius: 9999px; /* Fully rounded */
             border: none;
@@ -169,7 +204,7 @@
             transition: background-color 0.2s, color 0.2s;
         }
         #custom-controls button:hover:not(:disabled) { /* Add :not(:disabled) */
-            background-color: #d1d5db; /* Slightly darker gray */
+            background-color: #64748b; /* Lighter gray on hover */
         }
         #custom-controls button:disabled {
             opacity: 0.5;
@@ -183,12 +218,47 @@
         #volume-control {
             width: 100px; /* Adjust width as needed */
             cursor: pointer;
+            background-color: #475569;
+            border-radius: 0.25rem;
+        }
+        
+        /* Style the volume slider for dark mode */
+        #volume-control::-webkit-slider-track {
+            background: #475569;
+            border-radius: 0.25rem;
+            height: 4px;
+        }
+        
+        #volume-control::-webkit-slider-thumb {
+            background: #3b82f6;
+            border-radius: 50%;
+            height: 16px;
+            width: 16px;
+            border: none;
+            cursor: pointer;
+        }
+        
+        #volume-control::-moz-range-track {
+            background: #475569;
+            border-radius: 0.25rem;
+            height: 4px;
+            border: none;
+        }
+        
+        #volume-control::-moz-range-thumb {
+            background: #3b82f6;
+            border-radius: 50%;
+            height: 16px;
+            width: 16px;
+            border: none;
+            cursor: pointer;
         }
         #speed-control {
             padding: 0.4rem 0.6rem;
             border-radius: 0.375rem; /* md */
-            border: 1px solid #d1d5db;
-            background-color: white;
+            border: 1px solid #475569;
+            background-color: #334155; /* Dark background */
+            color: #e2e8f0; /* Light text */
             font-size: 0.875rem;
             cursor: pointer;
         }
@@ -198,21 +268,6 @@
              outline: none;
         }
 
-        /* Current paragraph display */
-        #current-paragraph {
-            margin-top: 1.5rem;
-            padding: 1rem 1.25rem;
-            background-color: #eef2ff; /* Indigo-50 */
-            border-radius: 0.5rem;
-            color: #4338ca; /* Indigo-700 */
-            font-style: italic;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            text-align: left; /* Align left for readability */
-            border: 1px solid #c7d2fe; /* Indigo-200 */
-        }
 
         /* Hide elements */
         .hidden {
@@ -226,73 +281,85 @@
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-slate-900">
     <div class="container space-y-6">
-        <h1 class="text-3xl font-bold text-center text-gray-900">Text-to-Speech Stream</h1>
+        <h1 class="text-3xl font-bold text-center text-slate-100">Text-to-Speech Stream</h1>
 
         <div id="message-box" class="message info hidden"></div>
 
-        <div>
-            <label for="text" class="block text-sm font-medium text-gray-700 mb-1">Enter Text or Load from File:</label>
-            <textarea id="text" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm" rows="6" placeholder="Enter text here, paragraphs separated by double line breaks..."></textarea>
-            <div class="mt-4 flex items-center space-x-2">
-                <input type="file" id="file-input" accept=".txt,.md,.html,.pdf" class="hidden">
-                <button id="load-file-button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 action-button">
-                    <i data-lucide="folder-open" class="w-5 h-5"></i>
-                    <span>Browse for File</span>
-                </button>
-                <span id="file-name" class="text-sm text-gray-600 truncate">No file selected</span>
-            </div>
-        </div>
-
-        <div>
-            <label for="voice-select" class="block text-sm font-medium text-gray-700 mb-1">Select Voice:</label>
-            <select id="voice-select" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-white">
-                <option value="">Loading voices...</option>
-            </select>
-        </div>
-
-        <div>
-            <label for="target-language-select" class="block text-sm font-medium text-gray-700 mb-1">Translate To (Optional):</label>
-            <select id="target-language-select" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-white">
-                <option value="">-- Do Not Translate --</option>
-                <!-- Languages will be loaded here by JavaScript -->
-            </select>
-        </div>
-
-        <button id="stream-button" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 action-button disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-            <span id="stream-button-icon"><i data-lucide="play-circle" class="w-5 h-5"></i></span>
-            <span id="stream-button-text">Stream Audio</span>
-        </button>
-
-        <div id="audio-container" class="hidden">
-            <audio id="single-audio-player"></audio> <div id="custom-controls">
-                <div class="control-group">
-                    <button id="restart-button" title="Restart Track" disabled><i data-lucide="rewind"></i></button>
-                    <button id="play-pause-button" title="Play/Pause" disabled><i data-lucide="play"></i></button>
-                    <button id="stop-button" title="Stop" disabled><i data-lucide="stop-circle"></i></button>
-                    <button id="next-button" title="Next Track" disabled><i data-lucide="skip-forward"></i></button>
-                </div>
-
-                <div class="control-group">
-                    <i data-lucide="volume-2" class="text-gray-600"></i>
-                    <input type="range" id="volume-control" min="0" max="1" step="0.05" value="1" class="volume-slider" disabled>
-                </div>
-
-                <div class="control-group">
-                     <i data-lucide="gauge-circle" class="text-gray-600"></i>
-                    <select id="speed-control" disabled>
-                        <option value="0.5">0.5x</option>
-                        <option value="0.75">0.75x</option>
-                        <option value="1" selected>1x</option>
-                        <option value="1.25">1.25x</option>
-                        <option value="1.5">1.5x</option>
-                        <option value="2">2x</option>
-                    </select>
+        <!-- Data Load View -->
+        <div id="data-load-view" class="space-y-6">
+            <div>
+                <label for="text" class="block text-sm font-medium text-slate-300 mb-1">Enter Text or Load from File:</label>
+                <textarea id="text" class="w-full p-3 border border-slate-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-slate-700 text-slate-200" rows="6" placeholder="Enter text here, paragraphs separated by double line breaks..."></textarea>
+                <div class="mt-4 flex items-center space-x-2">
+                    <input type="file" id="file-input" accept=".txt,.md,.html,.pdf" class="hidden">
+                    <button id="load-file-button" class="px-4 py-2 bg-slate-600 text-slate-200 rounded-lg hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 action-button">
+                        <i data-lucide="folder-open" class="w-5 h-5"></i>
+                        <span>Browse for File</span>
+                    </button>
+                    <span id="file-name" class="text-sm text-slate-400 truncate">No file selected</span>
                 </div>
             </div>
 
-             <div id="current-paragraph" class="hidden"></div>
+            <div>
+                <label for="voice-select" class="block text-sm font-medium text-slate-300 mb-1">Select Voice:</label>
+                <select id="voice-select" class="w-full p-3 border border-slate-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-slate-700 text-slate-200">
+                    <option value="">Loading voices...</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="target-language-select" class="block text-sm font-medium text-slate-300 mb-1">Translate To (Optional):</label>
+                <select id="target-language-select" class="w-full p-3 border border-slate-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-slate-700 text-slate-200">
+                    <option value="">-- Do Not Translate --</option>
+                    <!-- Languages will be loaded here by JavaScript -->
+                </select>
+            </div>
+
+            <button id="stream-button" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 action-button disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <span id="stream-button-icon"><i data-lucide="play-circle" class="w-5 h-5"></i></span>
+                <span id="stream-button-text">Stream Audio</span>
+            </button>
+            
+        </div>
+
+        <!-- Playback/Display View -->
+        <div id="playback-view" class="hidden space-y-6">
+            <button id="back-to-load" class="px-3 py-1 bg-slate-600 text-slate-200 rounded hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 action-button">
+                <i data-lucide="arrow-left"></i> Back
+            </button>
+
+            <div id="audio-container">
+                <audio id="single-audio-player"></audio>
+                <div id="custom-controls">
+                    <div class="control-group">
+                        <button id="restart-button" title="Restart Track" disabled><i data-lucide="rewind"></i></button>
+                        <button id="play-pause-button" title="Play/Pause" disabled><i data-lucide="play"></i></button>
+                        <button id="stop-button" title="Stop" disabled><i data-lucide="stop-circle"></i></button>
+                        <button id="next-button" title="Next Track" disabled><i data-lucide="skip-forward"></i></button>
+                    </div>
+
+                    <div class="control-group">
+                        <i data-lucide="volume-2" class="text-slate-400"></i>
+                        <input type="range" id="volume-control" min="0" max="1" step="0.05" value="1" class="volume-slider" disabled>
+                    </div>
+
+                    <div class="control-group">
+                         <i data-lucide="gauge-circle" class="text-slate-400"></i>
+                        <select id="speed-control" disabled>
+                            <option value="0.5">0.5x</option>
+                            <option value="0.75">0.75x</option>
+                            <option value="1" selected>1x</option>
+                            <option value="1.25">1.25x</option>
+                            <option value="1.5">1.5x</option>
+                            <option value="2">2x</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+             <div id="full-text-display" class="hidden"></div>
         </div>
     </div>
 
@@ -305,7 +372,7 @@
         const audioContainer = document.getElementById('audio-container');
         const messageBox = document.getElementById('message-box');
         const singleAudioPlayer = document.getElementById('single-audio-player'); // Still needed for JS
-        const currentParagraphDiv = document.getElementById('current-paragraph');
+        const fullTextDisplayDiv = document.getElementById('full-text-display');
         const customControlsDiv = document.getElementById('custom-controls');
         const playPauseButton = document.getElementById('play-pause-button');
         const stopButton = document.getElementById('stop-button');
@@ -317,6 +384,12 @@
         const loadFileButton = document.getElementById('load-file-button');
         const fileNameSpan = document.getElementById('file-name');
 
+        // --- SPA View Elements ---
+        const dataLoadView = document.getElementById('data-load-view');
+        const playbackView = document.getElementById('playback-view');
+        const backToLoadBtn = document.getElementById('back-to-load');
+
+
         // --- State Variables ---
         const clientId = Math.floor(Math.random() * 1000000);
         let ws;
@@ -325,8 +398,11 @@
         let isStreamProcessing = false;
         let isAudioSetup = false;
         let isStopping = false;
-        
-        // Word highlighting state
+
+        // Text display and highlighting state
+        let fullText = '';
+        let allParagraphs = [];
+        let currentParagraphIndex = 0;
         let currentParagraphText = '';
         let currentWords = [];
         let currentWordIndex = 0;
@@ -342,70 +418,136 @@
             return text.match(/\S+|\s+/g) || [];
         }
 
+        function displayFullTextWithParagraphs(text) {
+            console.log("Displaying full text with", text.length, "characters");
+            fullText = text;
+            // Split text into paragraphs using the same logic as the backend
+            allParagraphs = text.split('\n\n').map(p => p.trim()).filter(p => p);
+            currentParagraphIndex = 0;
+            
+            // If no paragraphs found with double newlines, treat entire text as one paragraph
+            if (allParagraphs.length === 0) {
+                // Try splitting by single newlines or just use the whole text
+                const singleLineParagraphs = text.split('\n').map(p => p.trim()).filter(p => p);
+                if (singleLineParagraphs.length > 1) {
+                    allParagraphs = singleLineParagraphs;
+                } else {
+                    allParagraphs = [text.trim()];
+                }
+            }
+            
+            // Final safety check - ensure we have at least one paragraph
+            if (allParagraphs.length === 0) {
+                allParagraphs = [text.trim() || "No text provided"];
+            }
+
+            // Create HTML with each paragraph wrapped in a div
+            const paragraphsHtml = allParagraphs.map((paragraph, index) => {
+                const className = 'text-paragraph upcoming';
+                return `<div class="${className}" data-paragraph-index="${index}">${paragraph}</div>`;
+            }).join('');
+
+            fullTextDisplayDiv.innerHTML = paragraphsHtml;
+            fullTextDisplayDiv.classList.remove('hidden');
+            
+            console.log(`Displaying full text with ${allParagraphs.length} paragraphs`);
+        }
+
         function displayParagraphWithWords(text) {
             currentParagraphText = text;
             currentWords = splitTextIntoWords(text);
             currentWordIndex = 0;
-            
-            // Create HTML with each word wrapped in a span
-            const wordsHtml = currentWords.map((word, index) => {
-                if (word.trim()) {
-                    return `<span class="word" data-word-index="${index}">${word}</span>`;
+
+            // Find the current paragraph in the full text display
+            const currentParagraphDiv = fullTextDisplayDiv.querySelector(`[data-paragraph-index="${currentParagraphIndex}"]`);
+            if (currentParagraphDiv) {
+                // Create HTML with each word wrapped in a span for the current paragraph
+                const wordsHtml = currentWords.map((word, index) => {
+                    if (word.trim()) {
+                        return `<span class="word" data-word-index="${index}">${word}</span>`;
+                    } else {
+                        return word; // Preserve whitespace as-is
+                    }
+                }).join('');
+
+                currentParagraphDiv.innerHTML = wordsHtml;
+                
+                // Update paragraph styling
+                updateParagraphStyling();
+            }
+
+            console.log(`Displaying paragraph ${currentParagraphIndex + 1} with ${currentWords.length} words`);
+        }
+
+        function updateParagraphStyling() {
+            // Update all paragraph styles based on current position
+            const paragraphDivs = fullTextDisplayDiv.querySelectorAll('.text-paragraph');
+            paragraphDivs.forEach((div, index) => {
+                div.classList.remove('played', 'current', 'upcoming');
+                if (index < currentParagraphIndex) {
+                    div.classList.add('played');
+                } else if (index === currentParagraphIndex) {
+                    div.classList.add('current');
+                    // Scroll current paragraph into view
+                    div.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center',
+                        inline: 'nearest'
+                    });
                 } else {
-                    return word; // Preserve whitespace as-is
+                    div.classList.add('upcoming');
                 }
-            }).join('');
-            
-            currentParagraphDiv.innerHTML = wordsHtml;
-            currentParagraphDiv.classList.remove('hidden');
-            
-            console.log(`Displaying paragraph with ${currentWords.length} words`);
+            });
         }
 
         function highlightCurrentWord() {
             // Remove previous highlighting
-            const previousHighlight = currentParagraphDiv.querySelector('.word-highlight');
+            const previousHighlight = fullTextDisplayDiv.querySelector('.word-highlight');
             if (previousHighlight) {
                 previousHighlight.classList.remove('word-highlight', 'pulse');
             }
-            
-            // Find current word element
-            const currentWordElement = currentParagraphDiv.querySelector(`[data-word-index="${currentWordIndex}"]`);
-            if (currentWordElement && currentWordElement.textContent.trim()) {
-                currentWordElement.classList.add('word-highlight', 'pulse');
-                
-                // Scroll to keep current word visible
-                currentWordElement.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'nearest',
-                    inline: 'nearest'
-                });
-                
-                console.log(`Highlighting word ${currentWordIndex}: "${currentWordElement.textContent.trim()}"`);
+
+            // Find current word element in the current paragraph
+            const currentParagraphDiv = fullTextDisplayDiv.querySelector(`[data-paragraph-index="${currentParagraphIndex}"]`);
+            if (currentParagraphDiv) {
+                const currentWordElement = currentParagraphDiv.querySelector(`[data-word-index="${currentWordIndex}"]`);
+                if (currentWordElement && currentWordElement.textContent.trim()) {
+                    currentWordElement.classList.add('word-highlight', 'pulse');
+
+                    // Scroll to keep current word visible
+                    currentWordElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest',
+                        inline: 'nearest'
+                    });
+
+                    console.log(`Highlighting word ${currentWordIndex} in paragraph ${currentParagraphIndex + 1}: "${currentWordElement.textContent.trim()}"`);
+                }
             }
         }
 
         function startWordHighlighting(audioDuration) {
             stopWordHighlighting(); // Clear any existing highlighting
-            
+
             if (!currentWords.length) return;
-            
+
             // Calculate timing based on audio duration and word count
             const totalWords = currentWords.filter(word => word.trim()).length;
-            const wordDuration = audioDuration / totalWords * 1000; // Convert to milliseconds
-            
+            // Avoid division by zero if text is empty or only whitespace
+            const wordDuration = totalWords > 0 ? (audioDuration / totalWords) * 1000 : 0; // Convert to milliseconds
+
             console.log(`Starting word highlighting: ${totalWords} words over ${audioDuration}s (${wordDuration.toFixed(0)}ms per word)`);
-            
+
             currentWordIndex = 0;
             highlightCurrentWord();
-            
+
             // Use both interval-based and time-based highlighting for better accuracy
             wordHighlightInterval = setInterval(() => {
                 // Sync with actual audio time if available
-                if (singleAudioPlayer.currentTime && singleAudioPlayer.duration) {
+                if (singleAudioPlayer.currentTime && singleAudioPlayer.duration && !isNaN(singleAudioPlayer.duration) && singleAudioPlayer.duration > 0) {
                     const progress = singleAudioPlayer.currentTime / singleAudioPlayer.duration;
                     const expectedWordIndex = Math.floor(progress * totalWords);
-                    
+
                     // Find the actual word index (skipping whitespace)
                     let actualWordIndex = 0;
                     let wordCount = 0;
@@ -417,45 +559,58 @@
                             }
                             wordCount++;
                         }
+                         // If we reached the end of words but not the end of the array (due to trailing whitespace)
+                         if (i === currentWords.length - 1 && wordCount < expectedWordIndex) {
+                             actualWordIndex = currentWords.length - 1; // Highlight the last element
+                             break;
+                         }
                     }
-                    
+
                     if (actualWordIndex !== currentWordIndex) {
                         currentWordIndex = actualWordIndex;
                         highlightCurrentWord();
                     }
-                } else {
-                    // Fallback to simple interval-based highlighting
+                } else if (wordDuration > 0) {
+                    // Fallback to simple interval-based highlighting if duration is not available yet
                     currentWordIndex++;
-                    
+
                     // Skip whitespace-only words
                     while (currentWordIndex < currentWords.length && !currentWords[currentWordIndex]?.trim()) {
                         currentWordIndex++;
                     }
-                    
+
                     if (currentWordIndex < currentWords.length) {
                         highlightCurrentWord();
                     } else {
                         stopWordHighlighting();
                     }
+                } else {
+                     // If wordDuration is 0 (e.g., empty text), stop highlighting
+                     stopWordHighlighting();
                 }
-            }, Math.min(wordDuration, 200)); // Update at least every 200ms for smooth highlighting
+            }, Math.max(wordDuration, 50)); // Update at least every 50ms for smoother highlighting, but not faster than calculated wordDuration
         }
+
 
         function stopWordHighlighting() {
             if (wordHighlightInterval) {
                 clearInterval(wordHighlightInterval);
                 wordHighlightInterval = null;
             }
-            
+
             // Remove all highlighting
-            const highlighted = currentParagraphDiv.querySelectorAll('.word-highlight');
+            const highlighted = fullTextDisplayDiv.querySelectorAll('.word-highlight');
             highlighted.forEach(el => el.classList.remove('word-highlight', 'pulse'));
-            
-            currentWordIndex = 0;
+
+            // Do NOT reset currentWordIndex here if we might resume
+            // currentWordIndex = 0;
         }
 
         function resetWordHighlighting() {
             stopWordHighlighting();
+            fullText = '';
+            allParagraphs = [];
+            currentParagraphIndex = 0;
             currentParagraphText = '';
             currentWords = [];
             currentWordIndex = 0;
@@ -480,14 +635,26 @@
 
         function displayParagraph(text) {
             console.log("Displaying paragraph:", text);
+            
+            // Find which paragraph this text corresponds to
+            if (allParagraphs.length > 0) {
+                // Find the paragraph index that matches this text
+                const paragraphIndex = allParagraphs.findIndex(p => p.trim() === text.trim());
+                if (paragraphIndex !== -1) {
+                    currentParagraphIndex = paragraphIndex;
+                    console.log(`Found paragraph at index ${currentParagraphIndex}`);
+                }
+            }
+            
+            // Use displayParagraphWithWords for highlighting setup
             displayParagraphWithWords(text || " ");
         }
 
-        function hideParagraph() {
-            console.log("Hiding paragraph display");
+        function hideFullTextDisplay() {
+            console.log("Hiding full text display");
             resetWordHighlighting();
-            currentParagraphDiv.classList.add('hidden');
-            currentParagraphDiv.textContent = '';
+            fullTextDisplayDiv.classList.add('hidden');
+            fullTextDisplayDiv.innerHTML = ''; // Clear content
         }
 
         function updatePlayPauseIcon(showPlay = true) {
@@ -509,7 +676,7 @@
         }
 
         function updateNextButtonState() {
-            nextButton.disabled = audioQueue.length === 0;
+            nextButton.disabled = audioQueue.length === 0 && !isStreamProcessing; // Disable if queue is empty AND stream is complete
         }
 
 
@@ -607,23 +774,25 @@
                          if (data.warning) showMessage('warning', data.warning);
                          if (!isPlaying && audioQueue.length === 0) {
                              showMessage('success', 'Processing complete. Playback finished or no audio generated.');
-                             resetAudioPlayerUI();
+                             resetAudioPlayerUI(); // Full reset if nothing played
                          } else if (isPlaying || audioQueue.length > 0) {
                              showMessage('info', 'All audio chunks received. Playback in progress...');
                          }
                          setStreamButtonLoading(false); // Re-enable button on completion
+                         updateNextButtonState(); // Update next button state now that processing is complete
                      } else if (data.type === 'error') {
                          console.error("Server error message received:", data.message);
                          showMessage('error', `Server error: ${data.message}`);
                          isStreamProcessing = false;
                          setStreamButtonLoading(false); // Re-enable button on error
-                         resetAudioPlayerUI();
+                         resetAudioPlayerUI(); // Full reset on server error
                      } else if (data.type === 'stopped') {
                          console.log("Server stopped message received:", data.message);
                          showMessage('info', data.message || 'TTS generation stopped');
                          isStreamProcessing = false;
                          setStreamButtonLoading(false); // Re-enable button
                          // Don't reset audio player UI here - let user continue with existing audio
+                         updateNextButtonState(); // Update next button state
                      } else if (data.message) {
                          console.log("Server message:", data.message);
                     }
@@ -639,7 +808,7 @@
                  streamButton.disabled = true; // Keep disabled during error
                  setStreamButtonLoading(false); // Reset icon on error
                  isStreamProcessing = false;
-                 resetAudioPlayerUI();
+                 resetAudioPlayerUI(); // Full reset on WS error
                  setTimeout(connectWebSocket, WS_RECONNECT_DELAY);
              };
 
@@ -648,7 +817,7 @@
                  streamButton.disabled = true; // Disable on close
                  setStreamButtonLoading(false); // Reset icon on close
                  isStreamProcessing = false;
-                 resetAudioPlayerUI();
+                 resetAudioPlayerUI(); // Full reset on WS close
                  if (!event.wasClean) {
                      showMessage('warning', 'Disconnected from server. Attempting to reconnect...');
                      setTimeout(connectWebSocket, WS_RECONNECT_DELAY);
@@ -674,44 +843,43 @@
                 console.log("Playing next chunk:", audioChunk.url, "| Text:", audioChunk.text);
                 updateNextButtonState();
 
-                if (!isAudioSetup) {
-                    audioContainer.classList.remove('hidden');
-                    setControlsDisabled(false);
-                    isAudioSetup = true;
-                } else {
-                    playPauseButton.disabled = false;
-                    stopButton.disabled = false;
-                    restartButton.disabled = false;
-                    volumeControl.disabled = false;
-                    speedControl.disabled = false;
-                }
+                // Ensure controls are enabled when playback starts
+                setControlsDisabled(false);
+                isAudioSetup = true;
+
 
                 singleAudioPlayer.src = audioChunk.url;
                 singleAudioPlayer.playbackRate = parseFloat(speedControl.value);
                 singleAudioPlayer.volume = parseFloat(volumeControl.value);
                 singleAudioPlayer.load();
-                displayParagraph(audioChunk.text);
+                displayParagraph(audioChunk.text); // Display the text for the current chunk
 
                 singleAudioPlayer.play().then(() => {
                     console.log("Audio playback started:", audioChunk.url);
                     updatePlayPauseIcon(false);
                     restartButton.disabled = false;
-                    
+
                     // Start word highlighting based on audio duration
-                    if (singleAudioPlayer.duration && !isNaN(singleAudioPlayer.duration)) {
-                        startWordHighlighting(singleAudioPlayer.duration);
-                    } else {
-                        // Fallback: estimate duration based on text length and speaking rate
-                        const estimatedDuration = currentWords.filter(w => w.trim()).length / estimatedWordsPerSecond;
-                        startWordHighlighting(estimatedDuration);
-                    }
+                    // Wait a moment for duration to be available
+                    setTimeout(() => {
+                         if (singleAudioPlayer.duration && !isNaN(singleAudioPlayer.duration) && singleAudioPlayer.duration > 0) {
+                             startWordHighlighting(singleAudioPlayer.duration);
+                         } else {
+                             // Fallback: estimate duration based on text length and speaking rate
+                             const estimatedDuration = currentWords.filter(w => w.trim()).length / estimatedWordsPerSecond;
+                             startWordHighlighting(estimatedDuration);
+                         }
+                    }, 100); // Small delay to allow duration to load
                 }).catch(e => {
                     console.error("Audio play failed:", e);
                     showMessage('error', `Audio playback failed: ${e.message}. Try interacting with the page first.`);
                     isPlaying = false;
                     updatePlayPauseIcon(true);
                     restartButton.disabled = true;
-                    hideParagraph();
+                    stopWordHighlighting(); // Stop word highlighting on error
+                    hideFullTextDisplay(); // Hide full text display on error
+                    // Attempt to play the next chunk if available
+                    playNextAudio();
                 });
 
             } else { // audioQueue is empty
@@ -721,35 +889,36 @@
                      isPlaying = false;
                      if (isAudioSetup) showMessage('success', 'Playback complete.');
                      else showMessage('success', 'Processing complete. No audio was generated or played.');
-                     resetAudioPlayerUI(false);
+                     resetAudioPlayerUI(false, false); // Keep controls visible but disabled, keep text visible
                      updatePlayPauseIcon(true);
-                     hideParagraph();
+                     // Don't hide full text display when playback finishes - keep it visible
                  } else {
                      console.log("Queue empty, waiting for more chunks or completion message.");
                      isPlaying = false;
                      updatePlayPauseIcon(true);
-                     restartButton.disabled = true;
+                     restartButton.disabled = true; // Disable restart until next chunk loads
                  }
                  updateNextButtonState();
             }
         }
 
-        function resetAudioPlayerUI(hideContainer = true) {
-             console.log("Resetting Audio Player UI. Hide container:", hideContainer);
+        function resetAudioPlayerUI(hideContainer = true, hideTextDisplay = true) {
+             console.log("Resetting Audio Player UI. Hide container:", hideContainer, "Hide text display:", hideTextDisplay);
              singleAudioPlayer.pause();
              singleAudioPlayer.removeAttribute('src');
              singleAudioPlayer.load();
              isPlaying = false;
              isAudioSetup = false;
              isStopping = false;
-             audioQueue = [];
-             hideParagraph();
-             setControlsDisabled(true);
-             updateNextButtonState();
-             updatePlayPauseIcon(true);
-             if (hideContainer) {
-                 audioContainer.classList.add('hidden');
+             audioQueue = []; // Clear the queue
+             if (hideTextDisplay) {
+                 hideFullTextDisplay(); // Hide full text display only if requested
              }
+             setControlsDisabled(true); // Disable controls
+             updateNextButtonState(); // Update next button state (should be disabled)
+             updatePlayPauseIcon(true); // Show play icon
+             // Do not hide audioContainer here, it's part of the playback view
+             // audioContainer.classList.add('hidden');
         }
 
 
@@ -766,19 +935,34 @@
                 return;
             }
 
-            console.log("--- Initiating new stream ---");
-            audioQueue = [];
-            isStreamProcessing = true;
-             resetAudioPlayerUI();
-             hideMessage();
-             setStreamButtonLoading(true); // Set loading state
-             showMessage('info', 'Initiating stream request...');
-             
-             // Enable stop button during streaming
-             stopButton.disabled = false;
+            // --- Switch to playback view and show controls ---
+            dataLoadView.classList.add('hidden');
+            playbackView.classList.remove('hidden');
+            // audioContainer.classList.remove('hidden'); // audioContainer is now always visible in playbackView
+            displayFullTextWithParagraphs(text); // Display the full text initially
 
-             const selectedVoice = voiceSelect.value || null;
-             const targetLanguage = targetLanguageSelect.value || null;
+            console.log("--- Initiating new stream ---");
+            audioQueue = []; // Clear queue for new stream
+            isStreamProcessing = true;
+            // Reset audio player state but don't hide the text display we just showed
+            singleAudioPlayer.pause();
+            singleAudioPlayer.removeAttribute('src');
+            singleAudioPlayer.load();
+            isPlaying = false;
+            isAudioSetup = false;
+            isStopping = false;
+            audioQueue = []; // Clear the queue
+            setControlsDisabled(true); // Disable controls initially
+            updateNextButtonState(); // Update next button state (should be disabled)
+            updatePlayPauseIcon(true); // Show play icon
+            
+            hideMessage();
+            setStreamButtonLoading(true); // Set loading state
+            showMessage('info', 'Initiating stream request...');
+            stopButton.disabled = false; // Enable stop button immediately
+
+            const selectedVoice = voiceSelect.value || null;
+            const targetLanguage = targetLanguageSelect.value || null;
 
             try {
                 const response = await fetch('/api/tts/stream', {
@@ -789,24 +973,30 @@
                 const result = await response.json();
                 console.log("POST /api/tts/stream response:", result);
                 if (!response.ok) throw new Error(result.detail || result.error || `HTTP error ${response.status}`);
-                 showMessage('info', 'Stream initiated. Waiting for audio data...');
-                 // Button remains loading until WS message indicates completion/error
-             } catch (error) {
-                 console.error("Error initiating stream POST request:", error);
-                 showMessage('error', `Failed to start stream: ${error.message}`);
-                 isStreamProcessing = false;
-                 setStreamButtonLoading(false); // Reset button on fetch error
-                 resetAudioPlayerUI();
-             }
-         });
+                showMessage('info', 'Stream initiated. Waiting for audio data...');
+            } catch (error) {
+                console.error("Error initiating stream POST request:", error);
+                showMessage('error', `Failed to start stream: ${error.message}`);
+                isStreamProcessing = false;
+                setStreamButtonLoading(false); // Reset button on fetch error
+                resetAudioPlayerUI(false, false); // Reset UI state but keep text display
+            }
+        });
 
         singleAudioPlayer.onended = () => {
             console.log("Audio chunk ended.");
             isPlaying = false;
-            restartButton.disabled = true;
-            updatePlayPauseIcon(true);
+            restartButton.disabled = true; // Disable restart for the finished chunk
+            updatePlayPauseIcon(true); // Show play icon
             stopWordHighlighting(); // Stop word highlighting when audio ends
-            playNextAudio();
+            
+            // Mark current paragraph as played and move to next
+            if (currentParagraphIndex < allParagraphs.length - 1) {
+                currentParagraphIndex++;
+                updateParagraphStyling();
+            }
+            
+            playNextAudio(); // Attempt to play the next chunk
         };
 
         singleAudioPlayer.onerror = (e) => {
@@ -816,26 +1006,29 @@
             updatePlayPauseIcon(true);
             restartButton.disabled = true;
             stopWordHighlighting(); // Stop word highlighting on error
-            hideParagraph();
-            playNextAudio();
+            hideFullTextDisplay(); // Hide full text display on error
+            playNextAudio(); // Attempt to play the next chunk
         };
 
          // --- Custom Controls Event Listeners ---
          restartButton.addEventListener('click', () => {
+             // Restart should only restart the *current* chunk if possible
+             // This is complex with streaming. For simplicity, let's just restart the current audio element.
+             // A true restart of the *stream* would require a new server request.
+             // Let's make restart just replay the current loaded chunk.
              if (!singleAudioPlayer.src || !isAudioSetup) return;
              console.log("Restart button clicked");
              singleAudioPlayer.currentTime = 0;
-             
-             // Restart word highlighting from the beginning
+
+             // Restart word highlighting from the beginning of the current paragraph
              if (currentWords.length > 0) {
-                 if (singleAudioPlayer.duration && !isNaN(singleAudioPlayer.duration)) {
-                     startWordHighlighting(singleAudioPlayer.duration);
-                 } else {
-                     const estimatedDuration = currentWords.filter(w => w.trim()).length / estimatedWordsPerSecond;
-                     startWordHighlighting(estimatedDuration);
-                 }
+                 // Recalculate duration if needed, or use estimated
+                 const audioDuration = singleAudioPlayer.duration && !isNaN(singleAudioPlayer.duration) && singleAudioPlayer.duration > 0
+                                       ? singleAudioPlayer.duration
+                                       : currentWords.filter(w => w.trim()).length / estimatedWordsPerSecond;
+                 startWordHighlighting(audioDuration);
              }
-             
+
              if (singleAudioPlayer.paused) {
                  singleAudioPlayer.play().then(() => updatePlayPauseIcon(false)).catch(e => console.error("Play failed:", e));
              }
@@ -845,59 +1038,70 @@
              if (!singleAudioPlayer.src || !isAudioSetup) return;
              if (singleAudioPlayer.paused) {
                  singleAudioPlayer.play().then(() => {
+                     console.log("Playback resumed.");
                      updatePlayPauseIcon(false);
-                     // Resume word highlighting if we have words loaded
+                     // Resume word highlighting if we have words loaded and it was stopped
                      if (currentWords.length > 0 && !wordHighlightInterval) {
-                         const remainingDuration = singleAudioPlayer.duration - singleAudioPlayer.currentTime;
+                         // Estimate remaining duration or use total if available
+                         const remainingDuration = singleAudioPlayer.duration && !isNaN(singleAudioPlayer.duration) && singleAudioPlayer.duration > 0
+                                                   ? singleAudioPlayer.duration - singleAudioPlayer.currentTime
+                                                   : (currentWords.filter(w => w.trim()).length - currentWordIndex) / estimatedWordsPerSecond; // Rough estimate
                          if (remainingDuration > 0) {
-                             startWordHighlighting(remainingDuration);
+                             // Need to restart highlighting from the current word index
+                             // This requires modifying startWordHighlighting or creating a resume function
+                             // For now, let's just restart from the beginning of the current paragraph on resume for simplicity
+                             const audioDuration = singleAudioPlayer.duration && !isNaN(singleAudioPlayer.duration) && singleAudioPlayer.duration > 0
+                                                   ? singleAudioPlayer.duration
+                                                   : currentWords.filter(w => w.trim()).length / estimatedWordsPerSecond;
+                             startWordHighlighting(audioDuration); // Restart highlighting from start of paragraph
                          }
                      }
                  }).catch(e => console.error("Play failed:", e));
              } else {
+                 console.log("Playback paused.");
                  singleAudioPlayer.pause();
                  updatePlayPauseIcon(true);
                  // Pause word highlighting
-                 stopWordHighlighting();
+                 stopWordHighlighting(); // Stop interval, but keep currentWordIndex
              }
          });
 
          stopButton.addEventListener('click', async () => {
              console.log("Stop button clicked");
-             
+
              if (isStopping) {
                  console.log("Stop already in progress");
                  return;
              }
-             
+
              isStopping = true;
-             
+
              // Stop current audio playback immediately
              singleAudioPlayer.pause();
              singleAudioPlayer.currentTime = 0;
              isPlaying = false;
              updatePlayPauseIcon(true);
-             
+
              // Clear the audio queue to prevent further playback
              audioQueue = [];
              updateNextButtonState();
-             hideParagraph();
-             
+             // Don't hide full text display on stop - keep it visible for context
+
              // If streaming is in progress, send stop request to server
              if (isStreamProcessing) {
                  try {
                      showMessage('info', 'Stopping TTS generation...');
-                     
+
                      const response = await fetch(`/api/tts/stop/${clientId}`, {
                          method: 'POST',
                          headers: {
                              'Content-Type': 'application/json'
                          }
                      });
-                     
+
                      const result = await response.json();
                      console.log("Stop TTS response:", result);
-                     
+
                      if (response.ok) {
                          showMessage('success', 'TTS generation stopped successfully');
                          isStreamProcessing = false;
@@ -913,23 +1117,28 @@
              } else {
                  showMessage('info', 'Playback stopped');
              }
-             
+
              // Reset UI state
-             restartButton.disabled = true;
-             stopButton.disabled = true;
+             setControlsDisabled(true); // Disable all controls
              isStopping = false;
          });
 
          nextButton.addEventListener('click', () => {
              if (audioQueue.length > 0) {
                  console.log("Next button clicked");
-                 singleAudioPlayer.pause();
-                 isPlaying = false;
-                 updatePlayPauseIcon(true);
-                 restartButton.disabled = true;
-                 playNextAudio();
+                 singleAudioPlayer.pause(); // Pause current audio
+                 isPlaying = false; // Mark as not playing
+                 updatePlayPauseIcon(true); // Show play icon
+                 restartButton.disabled = true; // Disable restart for the old chunk
+                 stopWordHighlighting(); // Stop highlighting for the old chunk
+                 // Don't hide the full text display - just update the current paragraph
+                 playNextAudio(); // Play the next chunk
              } else {
                  console.log("Next button clicked, but queue is empty.");
+                 // If queue is empty and processing is complete, maybe show a message?
+                 if (!isStreamProcessing) {
+                     showMessage('info', 'No more audio chunks in the queue.');
+                 }
              }
          });
 
@@ -1021,6 +1230,24 @@
              }
          }
 
+         // --- SPA View Logic ---
+         backToLoadBtn.addEventListener('click', () => {
+             console.log("Back button clicked");
+             // Stop any ongoing playback or streaming before switching back
+             if (isPlaying || isStreamProcessing) {
+                 // Trigger the stop logic, which will also reset UI and state
+                 stopButton.click(); // Simulate stop button click
+             }
+
+             // Switch views
+             playbackView.classList.add('hidden');
+             dataLoadView.classList.remove('hidden');
+
+             // Reset playback UI state explicitly in case stop didn't fully reset
+             resetAudioPlayerUI(false, true); // Keep controls visible but disabled, hide text display when going back
+             hideMessage(); // Clear any messages
+         });
+
 
          // --- Initialization ---
          function initializeApp() {
@@ -1029,8 +1256,12 @@
              fetchTranslationLanguages();
              connectWebSocket();
              lucide.createIcons(); // Initial icon creation
-             resetAudioPlayerUI();
+             resetAudioPlayerUI(false, true); // Reset UI state, keep playback view elements visible but disabled initially
+             // Ensure data load view is visible on load
+             dataLoadView.classList.remove('hidden');
+             playbackView.classList.add('hidden');
          }
+
 
         document.addEventListener('DOMContentLoaded', initializeApp);
 
