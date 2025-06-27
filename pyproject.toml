@@ -21,6 +21,7 @@ dependencies = [
     "pydantic>=2.5.0",
     "PyPDF2>=3.0.1",
     "python-multipart>=0.0.20",
+    "websockets>=15.0.1",
 ]
 
 [project.optional-dependencies]

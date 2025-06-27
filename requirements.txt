@@ -69,6 +69,8 @@ pygame==2.6.1
     # via tts (pyproject.toml)
 pypdf2==3.0.1
     # via tts (pyproject.toml)
+python-multipart==0.0.20
+    # via tts (pyproject.toml)
 pyyaml==6.0.2
     # via tts (pyproject.toml)
 rfc3986==1.5.0
@@ -95,6 +97,8 @@ typing-extensions==4.13.2
 typing-inspection==0.4.0
     # via pydantic
 uvicorn==0.34.2
+    # via tts (pyproject.toml)
+websockets==15.0.1
     # via tts (pyproject.toml)
 yarl==1.20.0
     # via aiohttp
