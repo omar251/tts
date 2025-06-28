@@ -93,6 +93,28 @@
             color: #94a3b8; /* Light gray text */
         }
 
+        .text-placeholder {
+            color: #64748b;
+            font-style: italic;
+            text-align: center;
+            padding: 2rem;
+            opacity: 0.7;
+        }
+
+        .text-paragraph.available {
+            background-color: transparent;
+            color: #94a3b8; /* Light gray text */
+            transition: all 0.2s ease-in-out;
+            border-left: 3px solid #22c55e; /* Green indicator for available */
+            padding-left: 0.75rem;
+        }
+
+        .text-paragraph.clickable:hover {
+            background-color: #334155; /* Dark hover background */
+            color: #e2e8f0; /* Lighter text on hover */
+            transform: translateX(4px); /* Subtle slide effect */
+        }
+
         textarea, select {
             border-radius: 0.5rem; /* Consistent rounded corners */
             border-color: #475569; /* Dark gray border */
@@ -418,16 +440,17 @@
             return text.match(/\S+|\s+/g) || [];
         }
 
-        function displayFullTextWithParagraphs(text) {
-            console.log("Displaying full text with", text.length, "characters");
+        function initializeProgressiveTextDisplay(text) {
+            console.log("Initializing progressive text display");
             fullText = text;
-            // Split text into paragraphs using the same logic as the backend
+            // Split text into paragraphs for internal tracking but don't display them yet
             allParagraphs = text.split('\n\n').map(p => p.trim()).filter(p => p);
             currentParagraphIndex = 0;
+            audioSegments = []; // Reset audio segments
+            isGeneratingAudio = true;
             
             // If no paragraphs found with double newlines, treat entire text as one paragraph
             if (allParagraphs.length === 0) {
-                // Try splitting by single newlines or just use the whole text
                 const singleLineParagraphs = text.split('\n').map(p => p.trim()).filter(p => p);
                 if (singleLineParagraphs.length > 1) {
                     allParagraphs = singleLineParagraphs;
@@ -441,16 +464,115 @@
                 allParagraphs = [text.trim() || "No text provided"];
             }
 
-            // Create HTML with each paragraph wrapped in a div
-            const paragraphsHtml = allParagraphs.map((paragraph, index) => {
-                const className = 'text-paragraph upcoming';
-                return `<div class="${className}" data-paragraph-index="${index}">${paragraph}</div>`;
-            }).join('');
-
-            fullTextDisplayDiv.innerHTML = paragraphsHtml;
+            // Start with empty display - text will be added progressively
+            fullTextDisplayDiv.innerHTML = '<div class="text-placeholder">Generating audio segments...</div>';
             fullTextDisplayDiv.classList.remove('hidden');
             
-            console.log(`Displaying full text with ${allParagraphs.length} paragraphs`);
+            // Initialize progress indicator
+            updateProgressIndicator();
+            
+            console.log(`Initialized progressive display for ${allParagraphs.length} paragraphs`);
+        }
+
+        function addGeneratedAudioSegment(text, audioUrl, paragraphIndex) {
+            // Add to audio segments array
+            audioSegments.push({
+                text: text,
+                audioUrl: audioUrl,
+                paragraphIndex: paragraphIndex
+            });
+
+            // Remove placeholder if this is the first segment
+            if (audioSegments.length === 1) {
+                const placeholder = fullTextDisplayDiv.querySelector('.text-placeholder');
+                if (placeholder) {
+                    placeholder.remove();
+                }
+            }
+
+            // Create and add the new paragraph element
+            const paragraphDiv = document.createElement('div');
+            paragraphDiv.className = 'text-paragraph available clickable';
+            paragraphDiv.setAttribute('data-paragraph-index', paragraphIndex);
+            paragraphDiv.textContent = text;
+            paragraphDiv.style.cursor = 'pointer';
+            
+            // Add click event listener
+            paragraphDiv.addEventListener('click', () => {
+                playSpecificSegment(paragraphIndex);
+            });
+
+            // Add to the display
+            fullTextDisplayDiv.appendChild(paragraphDiv);
+            
+            // Scroll the new segment into view
+            paragraphDiv.scrollIntoView({
+                behavior: 'smooth',
+                block: 'end',
+                inline: 'nearest'
+            });
+            
+            console.log(`Audio segment ${paragraphIndex} added and is clickable`);
+            
+            // Update progress indicator
+            updateProgressIndicator();
+        }
+
+        function playSpecificSegment(paragraphIndex) {
+            console.log(`Playing specific segment: ${paragraphIndex}`);
+            
+            // Find the audio segment for this paragraph
+            const segment = audioSegments.find(seg => seg.paragraphIndex === paragraphIndex);
+            if (!segment) {
+                showMessage('warning', 'Audio for this segment is not yet available.');
+                return;
+            }
+
+            // Stop current playback
+            singleAudioPlayer.pause();
+            isPlaying = false;
+            stopWordHighlighting();
+
+            // Clear the queue and play the specific segment
+            audioQueue = [];
+            currentParagraphIndex = paragraphIndex;
+
+            // Set up the audio
+            singleAudioPlayer.src = segment.audioUrl;
+            singleAudioPlayer.playbackRate = parseFloat(speedControl.value);
+            singleAudioPlayer.volume = parseFloat(volumeControl.value);
+            singleAudioPlayer.load();
+
+            // Display the paragraph with words
+            displayParagraphWithWords(segment.text);
+
+            // Enable controls
+            setControlsDisabled(false);
+            isAudioSetup = true;
+            isPlaying = true;
+
+            // Play the audio
+            singleAudioPlayer.play().then(() => {
+                console.log("Specific segment playback started:", segment.audioUrl);
+                updatePlayPauseIcon(false);
+                restartButton.disabled = false;
+
+                // Start word highlighting
+                setTimeout(() => {
+                    if (singleAudioPlayer.duration && !isNaN(singleAudioPlayer.duration) && singleAudioPlayer.duration > 0) {
+                        startWordHighlighting(singleAudioPlayer.duration);
+                    } else {
+                        const estimatedDuration = currentWords.filter(w => w.trim()).length / estimatedWordsPerSecond;
+                        startWordHighlighting(estimatedDuration);
+                    }
+                }, 100);
+            }).catch(e => {
+                console.error("Specific segment play failed:", e);
+                showMessage('error', `Audio playback failed: ${e.message}`);
+                isPlaying = false;
+                updatePlayPauseIcon(true);
+                restartButton.disabled = true;
+            });
         }
 
         function displayParagraphWithWords(text) {
@@ -614,6 +736,13 @@
             currentParagraphText = '';
             currentWords = [];
             currentWordIndex = 0;
+            audioSegments = [];
+            isGeneratingAudio = false;
+        }
+
+        function updateProgressIndicator() {
+            // Simple progress tracking - can be enhanced later
+            console.log(`Progress: ${audioSegments.length} segments generated`);
         }
 
         // --- Utility Functions ---
@@ -761,7 +890,14 @@
 
                     if (data.type === 'audio_url' && data.url && data.text !== undefined) {
                         console.log("Received audio chunk:", data.url, "| Text:", data.text);
-                        audioQueue.push({ url: data.url, text: data.text });
+                        
+                        // Add the text segment progressively to the display
+                        const paragraphIndex = audioSegments.length; // Use current length as index
+                        addGeneratedAudioSegment(data.text, data.url, paragraphIndex);
+                        
+                        // Also add to queue for sequential playback
+                        audioQueue.push({ url: data.url, text: data.text, paragraphIndex: paragraphIndex });
+                        
                         updateNextButtonState();
                         console.log("Audio queue length:", audioQueue.length);
                         if (!isPlaying) {
@@ -939,7 +1075,7 @@
             dataLoadView.classList.add('hidden');
             playbackView.classList.remove('hidden');
             // audioContainer.classList.remove('hidden'); // audioContainer is now always visible in playbackView
-            displayFullTextWithParagraphs(text); // Display the full text initially
+            initializeProgressiveTextDisplay(text); // Initialize progressive text display
 
             console.log("--- Initiating new stream ---");
             audioQueue = []; // Clear queue for new stream
