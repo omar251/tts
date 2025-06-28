@@ -1,0 +1,30 @@
+# Git
+.git
+.gitignore
+
+# Python
+.venv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.python-version
+uv.lock
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Project files
+README.md
+LICENSE
+Makefile
+pyproject.toml
+pytest.ini
+
+# Directories
+tests/
+docs/
+scripts/
+temp/
