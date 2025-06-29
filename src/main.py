@@ -77,8 +77,11 @@ class TTSApplication:
         # Step 1: Input Handling and Translation
         if input_text is None:
             vprint("[TTSApplication] No input provided. Using default input file.")
-            with open(settings.input_file, "r", encoding="utf-8") as file:
-                original_text = file.read().strip()
+            try:
+                with open(settings.input_file, "r", encoding="utf-8") as file:
+                    original_text = file.read().strip()
+            except FileNotFoundError:
+                original_text = "there is no input file"
         elif is_file:
             vprint(f"[TTSApplication] Reading input from file: {input_text}")
             with open(input_text, "r", encoding="utf-8") as file:
@@ -101,13 +104,13 @@ class TTSApplication:
 
         # Step 2b: Reconstruct translated file from chunks
         reconstructed_translated_text = "".join(chunks)
-        
+
         # Use unified file manager for translation file
         if target_language:
             translation_file = self.file_manager.create_translation_file_path("auto", target_language)
         else:
             translation_file = self.file_manager.create_translation_file_path("auto", "auto")
-        
+
         vprint(f"[TTSApplication] Writing translated text to file: {translation_file}")
         with open(translation_file, "w", encoding="utf-8") as f:
             f.write(reconstructed_translated_text)
@@ -141,7 +144,7 @@ Examples:
   # CLI mode (default)
   %(prog)s -t "Hello world"
   %(prog)s -f input.txt --language en
-  
+
   # Web server mode
   %(prog)s --server
   %(prog)s --server --host 0.0.0.0 --port 8080
@@ -149,19 +152,19 @@ Examples:
         """,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    
+
     # CLI mode arguments
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument("-f", "--file", help="Input file path")
     group.add_argument("-t", "--text", help="Input text")
     parser.add_argument("-l", "--language", help="Target language for translation (if not set, no translation will be performed)", default=None)
-    
+
     # Server mode arguments
     parser.add_argument("--server", action="store_true", help="Run the web server instead of CLI mode")
     parser.add_argument("--host", default="127.0.0.1", help="Host to bind to (only used with --server)")
     parser.add_argument("--port", type=int, default=8000, help="Port to bind to (only used with --server)")
     parser.add_argument("--reload", action="store_true", help="Enable auto-reload for development (only used with --server)")
-    
+
     # Common arguments
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
 
@@ -171,7 +174,7 @@ Examples:
     # Validate arguments
     if not args.server and (args.host != "127.0.0.1" or args.port != 8000 or args.reload):
         parser.error("--host, --port, and --reload can only be used with --server")
-    
+
     if args.server and (args.file or args.text):
         parser.error("Cannot use --file or --text with --server mode")
 
@@ -188,10 +191,10 @@ Examples:
             server_args.append("--reload")
         if args.verbose:
             server_args.extend(["--log-level", "debug"])
-        
+
         # Add any remaining arguments
         server_args.extend(remaining_args)
-        
+
         sys.argv = server_args
         from . import web_server
         web_server.main()

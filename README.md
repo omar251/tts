@@ -6,12 +6,13 @@ This project provides a flexible text-to-speech (TTS) solution that can process 
 
 ## Features
 
-- **Multiple Interfaces**: CLI and web-based interfaces for flexibility
+- **Multiple Interfaces**: CLI, web, and MCP server interfaces for maximum flexibility
 - **Input Options**: Accepts input from a file or direct text input
 - **Translation Support**: Optional translation to target language using Google Translate
 - **High-Quality TTS**: Uses Microsoft Edge TTS for natural-sounding speech
 - **Streaming Playback**: Processes text in chunks for smoother playback
 - **Session Management**: Unified file management with session-based organization
+- **MCP Integration**: Model Context Protocol server for AI assistant integration
 - **Docker Support**: Easy deployment with Docker and docker-compose
 
 ## Requirements
@@ -133,6 +134,36 @@ make run-web-direct
 
 # Access the web interface at http://localhost:8000
 ```
+
+### MCP Server (AI Assistant Integration)
+
+The TTS system includes a Model Context Protocol (MCP) server that allows AI assistants to use TTS functionality directly.
+
+```bash
+# Install and configure MCP server
+make install-mcp
+
+# Test MCP server functionality
+make test-mcp
+
+# Run examples
+python examples/mcp_usage_examples.py
+```
+
+**Available MCP Tools:**
+- `synthesize_speech`: Convert text to speech
+- `translate_text`: Translate text to another language
+- `get_available_voices`: List available TTS voices
+- `stream_tts_synthesis`: Stream TTS for long texts
+- `get_system_status`: Check system health
+- `cleanup_files`: Clean up old audio files
+
+**MCP Resources:**
+- `tts://config`: View system configuration
+- `tts://voices`: List all available voices
+- `tts://status`: Check system status
+
+See [MCP_README.md](MCP_README.md) for detailed MCP integration documentation.
 
 ### Docker Deployment
 

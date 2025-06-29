@@ -1,6 +1,6 @@
 # Makefile for TTS CLI Tool Development
 
-.PHONY: help install install-dev test test-cov lint format type-check clean build run-example security-check docs
+.PHONY: help install install-dev test test-cov lint format type-check clean build run-example security-check docs install-mcp test-mcp
 
 # Default target
 help:
@@ -20,6 +20,8 @@ help:
 	@echo "  run-web-direct - Run web server directly (dev mode)"
 	@echo "  test-file-management - Test unified file management system"
 	@echo "  test-server-option   - Test CLI --server option functionality"
+	@echo "  install-mcp  - Install and configure MCP server"
+	@echo "  test-mcp     - Test MCP server functionality"
 	@echo "  security     - Run security checks"
 	@echo "  docs         - Generate documentation"
 
@@ -48,6 +50,13 @@ test-file-management:
 
 test-server-option:
 	PYTHONPATH=. python tests/test_server_option.py
+
+# MCP targets
+install-mcp:
+	python mcp/install_mcp.py
+
+test-mcp:
+	PYTHONPATH=. python mcp/test_mcp_server.py
 
 # Code quality
 lint:

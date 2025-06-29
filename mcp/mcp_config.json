@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "tts-system": {
+      "command": "python",
+      "args": ["mcp_server.py"],
+      "cwd": ".",
+      "env": {
+        "PYTHONPATH": "src"
+      }
+    }
+  }
+}
