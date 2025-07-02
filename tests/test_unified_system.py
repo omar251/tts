@@ -99,36 +99,3 @@ async def test_cli_components():
         traceback.print_exc()
         return False
 
-async def main():
-    """Run all tests."""
-    print("🎵 Unified TTS System Test Suite")
-    print("Testing integration between CLI and web components")
-    print("=" * 60)
-    
-    # Test CLI components
-    cli_success = await test_cli_components()
-    
-    # Test unified service
-    service_success = await test_tts_service()
-    
-    # Summary
-    print("\n" + "=" * 60)
-    print("📊 Test Summary")
-    print("=" * 60)
-    print(f"CLI Components: {'✅ PASS' if cli_success else '❌ FAIL'}")
-    print(f"Unified Service: {'✅ PASS' if service_success else '❌ FAIL'}")
-    
-    if cli_success and service_success:
-        print("\n🎉 All systems operational! The unified TTS system is ready.")
-        print("\nNext steps:")
-        print("  • CLI: python -m src.main -t 'Hello world!'")
-        print("  • Web: python -m src.web_server")
-        print("  • API: uvicorn src.api_server:app")
-        return 0
-    else:
-        print("\n❌ Some tests failed. Check the errors above.")
-        return 1
-
-if __name__ == "__main__":
-    exit_code = asyncio.run(main())
-    sys.exit(exit_code)

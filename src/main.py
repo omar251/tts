@@ -2,6 +2,7 @@
 import asyncio
 import logging
 import os
+import sys
 from datetime import datetime
 import argparse
 from concurrent.futures import ThreadPoolExecutor
@@ -70,25 +71,28 @@ class TTSApplication:
         except Exception as e:
             logger.error(f"An error occurred during TTS and playback: {e}")
 
-    async def run(self, input_text: str | None = None, is_file: bool = False, target_language: str | None = None):
+    async def run(self, input_text: str | None = None, is_file: bool = False, is_stdin: bool = False, target_language: str | None = None):
         vprint("[TTSApplication] Unified file manager ready...")
         # The unified file manager automatically sets up directories
 
         # Step 1: Input Handling and Translation
-        if input_text is None:
+        if is_stdin:
+            vprint("[TTSApplication] Reading input from stdin...")
+            original_text = sys.stdin.read().strip()
+        elif is_file:
+            vprint(f"[TTSApplication] Reading input from file: {input_text}")
+            with open(input_text, "r", encoding="utf-8") as file:
+                original_text = file.read().strip()
+        elif input_text is not None:
+            vprint("[TTSApplication] Using provided input text.")
+            original_text = input_text
+        else:
             vprint("[TTSApplication] No input provided. Using default input file.")
             try:
                 with open(settings.input_file, "r", encoding="utf-8") as file:
                     original_text = file.read().strip()
             except FileNotFoundError:
                 original_text = "there is no input file"
-        elif is_file:
-            vprint(f"[TTSApplication] Reading input from file: {input_text}")
-            with open(input_text, "r", encoding="utf-8") as file:
-                original_text = file.read().strip()
-        else:
-            vprint("[TTSApplication] Using provided input text.")
-            original_text = input_text
 
         # Only translate if target_language is set and not empty
         if target_language:
@@ -156,7 +160,7 @@ Examples:
     # CLI mode arguments
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument("-f", "--file", help="Input file path")
-    group.add_argument("-t", "--text", help="Input text")
+    group.add_argument("-t", "--text", help="Input text (use '-' to read from stdin)")
     parser.add_argument("-l", "--language", help="Target language for translation (if not set, no translation will be performed)", default=None)
 
     # Server mode arguments
@@ -209,8 +213,12 @@ Examples:
             vprint(f"[Main] File input mode. File: {args.file}")
             asyncio.run(app.run(args.file, is_file=True, target_language=target_language))
         elif args.text:
-            vprint("[Main] Text input mode.")
-            asyncio.run(app.run(args.text, is_file=False, target_language=target_language))
+            if args.text == "-":
+                vprint("[Main] Stdin input mode.")
+                asyncio.run(app.run(is_stdin=True, target_language=target_language))
+            else:
+                vprint("[Main] Text input mode.")
+                asyncio.run(app.run(args.text, is_file=False, target_language=target_language))
         else:
             vprint("[Main] No input provided. Using default behavior.")
             asyncio.run(app.run(target_language=target_language))

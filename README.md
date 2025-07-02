@@ -90,6 +90,14 @@ tts -f examples/data/input.txt
 tts -t "Hello, how are you?"
 ```
 
+4. Process input from stdin (pipe):
+
+```bash
+echo "Hello world" | tts -t -
+cat input.txt | tts -t -
+date | tts -t -
+```
+
 #### Optional: Translate to a target language
 
 By default, the tool uses the original text with no translation.  
